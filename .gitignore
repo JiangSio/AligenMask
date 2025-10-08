@@ -26,3 +26,4 @@ datasets/real_anomaly_set
 datasets/real_data.zip
 __pycache__/
 *.pyc
+DualAnoDiff/dual-interrelated_diff/attn_maps/
