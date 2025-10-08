@@ -592,6 +592,7 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         guidance_rescale: float = 0.0,
         class_id : str = "",
+        data_dir : str = "",
     ):
         r"""
         Function invoked when calling the pipeline for generation.
@@ -735,7 +736,7 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
             generator,
             latents,
         )
-        img_path = f"../../datasets/real_anomaly_set/{class_id}/train/good"
+        img_path = os.path.join(data_dir,f"{class_id}/train/good")
         files = os.listdir(img_path)
         
         file_path = os.path.join(img_path,random.choices(files)[0])
@@ -759,19 +760,19 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         img_latents = self.vae.encode(img.unsqueeze(0)).latent_dist.sample()
         img_latents = self.vae.config.scaling_factor * img_latents
 
-        # red_path = f"../../datasets/red_image.png"
-        # red_img = Image.open(red_path)
-        # red_img = trans(red_img)
-        # red_img = red_img.to(device)
-        # red_latents = self.vae.encode(red_img.unsqueeze(0)).latent_dist.sample()
+        # method 1
         starter_time = 50 / num_inference_steps
         starter_idx = int(starter_time* len(timesteps))
-        # latents = noise * (1-starter_time) + img_latents * (starter_time) #* 0.9 + red_latents*(1 / num_inference_steps) * 0.1
+        # method 2
+        # pass
+
+
+        
+        # method 1
+        latents = self.scheduler.add_noise(img_latents, noise, torch.tensor(self.scheduler.timesteps[starter_idx]))
+        # method 2
         # latents = noise
         
-        # latents = self.scheduler.add_noise(img_latents, noise, torch.tensor(self.scheduler.timesteps[starter_idx]))
-        
-        # import ipdb;ipdb.set_trace()
 
         # 6. Prepare extra step kwargs. TODO: Logic should ideally just be moved out of the pipeline
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
@@ -779,20 +780,36 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         # 7. Denoising loop
         # import pdb;pdb.set_trace()
         
+        # method 1
         hook_attribute={
             "max_resolution": 512,
             "to_q_cache": None,"to_k_cache": None,
             "to_q_lora_cache": None,"to_k_lora_cache": None,
             "record_num": 0,"attention_map": None,
         }
+
+        # method 2
+        # hook_attribute={
+        #     "store_selfattn_list": [],
+        #     "to_q_cache": None,"to_k_cache": None,
+        #     "to_q_lora_cache": None,"to_k_lora_cache": None,
+        #     "record_num": 0,
+        # }
         
-        # timesteps = timesteps[starter_idx:]
+        #method 1
+        timesteps = timesteps[starter_idx:]
+        # method 2
+        # hook_handles = []
+        # pass
 
         num_warmup_steps = 0#len(timesteps) - num_inference_steps * self.scheduler.order * (1-starter_time)
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             # import pdb;pdb.set_trace()
             for i, t in enumerate(timesteps):
-                if t == timesteps[-20]:
+                if t == timesteps[10]:
+
+                    # method 1
+
                     def hook_fn(module, input, output):
                         
                         if hook_attribute["record_num"] % 4 == 0:
@@ -822,6 +839,29 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
                     for name, module in self.unet.named_modules():
                         if "attn2" in name and (name.endswith("to_q") or name.endswith("to_k") or name.endswith("to_q_lora") or name.endswith("to_k_lora")):  # 在SD中，attn2通常代表Cross-Attention（attn1是Self-Attention）
                             module.register_forward_hook(hook_fn)
+
+                    # method 2
+                    # def hook_fn(module, input, output):
+                        
+                    #     if hook_attribute["record_num"] < 18:
+                    #         hook_attribute["store_selfattn_list"].append(output)
+                    #         hook_attribute["record_num"] += 1
+                    #     elif hook_attribute["record_num"] < 35:
+                    #         output = hook_attribute["store_selfattn_list"][hook_attribute["record_num"] - 18]
+                    #         hook_attribute["record_num"] += 1
+                    #         return output
+                    #     elif hook_attribute["record_num"] == 35:
+                    #         output = hook_attribute["store_selfattn_list"][hook_attribute["record_num"] - 18]
+                    #         hook_attribute["record_num"] = 0
+                    #         hook_attribute["store_selfattn_list"] = []
+                    #         return output
+
+                    # for name, module in self.unet.named_modules():
+                    #     if "attn1" in name and "up_blocks" in name and (name.endswith("to_v") or name.endswith("to_k") or name.endswith("to_v_lora") or name.endswith("to_k_lora")):  # 在SD中，attn2通常代表Cross-Attention（attn1是Self-Attention）
+                    #         handle = module.register_forward_hook(hook_fn)
+                    #         hook_handles.append(handle)
+
+                #method1
                 
                 # expand the latents if we are doing classifier free guidance
                 latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
@@ -847,25 +887,72 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
 
                 # compute the previous noisy sample x_t -> x_t-1
                 latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
+                
 
+                '''method 2
+                
+                #prepare image latents
+                guided_latents = self.scheduler.add_noise(img_latents, noise, t)
+                guided_model_input = torch.cat([guided_latents] * 2) if do_classifier_free_guidance else guided_latents
+                guided_model_input = self.scheduler.scale_model_input(guided_model_input, t)
+                guided_pred = self.unet(
+                    guided_model_input,
+                    t,
+                    encoder_hidden_states=prompt_embeds,
+                    cross_attention_kwargs=cross_attention_kwargs,
+                    return_dict=False,
+                )[0]
+                # import pdb; pdb.set_trace()
+                # expand the latents if we are doing classifier free guidance
+                latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
+                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+                
+                # predict the noise residual
+                noise_pred = self.unet(
+                    latent_model_input,
+                    t,
+                    encoder_hidden_states=prompt_embeds,
+                    cross_attention_kwargs=cross_attention_kwargs,
+                    return_dict=False,
+                )[0]
+                # import pdb; pdb.set_trace()
+
+                # perform guidance
+                if do_classifier_free_guidance:
+                    noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+                    noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+
+                if do_classifier_free_guidance and guidance_rescale > 0.0:
+                    # Based on 3.4. in https://arxiv.org/pdf/2305.08891.pdf
+                    noise_pred = rescale_noise_cfg(noise_pred, noise_pred_text, guidance_rescale=guidance_rescale)
+
+                # compute the previous noisy sample x_t -> x_t-1
+                latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
+
+
+
+                
+                '''
+                
                 # call the callback, if provided
                 if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
                     progress_bar.update()
                     if callback is not None and i % callback_steps == 0:
                         callback(i, t, latents)
         
-        # pdb.set_trace()
-        hook_attribute["attention_map"] = hook_attribute["attention_map"] / (hook_attribute["record_num"] // 4)
-        results = hook_attribute["attention_map"]
+        # method 1
+        # hook_attribute["attention_map"] = hook_attribute["attention_map"] / (hook_attribute["record_num"] // 4)
+        # results = hook_attribute["attention_map"]
         
-        # results = (results - results.min()) / (results.max() - results.min())
-        import torchvision
-        for j in range(len(results[1])): # 0 uncond 1 text
-            os.makedirs("attn_maps", exist_ok=True)
-            results[1][j] = (results[1][j] - results[1][j].min()) / (results[1][j].max() - results[1][j].min())
-            torchvision.utils.save_image(results[1][j], f"attn_maps/attn_map_{j}.png")
+        # import torchvision
+        # for j in range(len(results[1])): # 0 uncond 1 text
+        #     os.makedirs("attn_maps", exist_ok=True)
+        #     results[1][j] = (results[1][j] - results[1][j].min()) / (results[1][j].max() - results[1][j].min())
+        #     torchvision.utils.save_image(results[1][j], f"attn_maps/attn_map_{j}.png")
 
-        # pdb.set_trace()
+        # method 2
+        # pass
+
         
 
 

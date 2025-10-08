@@ -6,6 +6,9 @@ import os
 from PIL import Image
 import torch
 
+mvtec_path = '/data/gpt/real_aligen/AliGen-main/datasets/real_anomaly_set'
+
+
 sys.path.append('.')
 pipe = DiffusionPipeline.from_pretrained(
     "runwayml/stable-diffusion-v1-5", safety_checker=None
@@ -27,7 +30,7 @@ cnt = len(os.listdir(os.path.join(target_path,'image')))
 # for i in range(cnt,1000):
 for i in range(cnt,1000):
     
-    outputs,origin_image = pipe(prompt_blend='a muscular handsome in the tight shirt',num_inference_steps=100,guidance_scale=2.5,class_id = mvtec_name)
+    outputs,origin_image = pipe(prompt_blend='a vfx with one red sks',num_inference_steps=100,guidance_scale=5,class_id = mvtec_name, data_dir = mvtec_path)
     outputs.images[0].save(os.path.join(target_path,'image',str(i)+".png"))
     
     os.makedirs(os.path.join(target_path,'origin'),exist_ok=True)

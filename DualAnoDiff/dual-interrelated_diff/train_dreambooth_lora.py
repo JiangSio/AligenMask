@@ -515,7 +515,7 @@ class DreamBoothDataset(Dataset):
         self.instance_prompt_encoder_hidden_states = instance_prompt_encoder_hidden_states
         self.tokenizer_max_length = tokenizer_max_length
 
-        self.instance_data_root="../../datasets/real_anomaly_set"
+        self.instance_data_root=instance_data_root
         self.mvtec_name=mvtec_name
         self.mvtec_anamaly_name=mvtec_anamaly_name
         
@@ -1285,9 +1285,12 @@ def main(args):
             else:
                 hook_attribute["attention_map"] += attn_map
 
+        
+
     for name, module in unet.named_modules():
         if "attn2" in name and (name.endswith("to_q") or name.endswith("to_k") or name.endswith("to_q_lora") or name.endswith("to_k_lora")):  # 在SD中，attn2通常代表Cross-Attention（attn1是Self-Attention）
             module.register_forward_hook(hook_fn)
+        
     
     ori_text_inputs = tokenizer(
         "a vfx with sks",
@@ -1425,7 +1428,7 @@ def main(args):
                 results = (results - results.min()) / (results.max() - results.min())
                 loss_attn = F.mse_loss(torch.cat(batch["mask"]), results, reduction="mean")
 
-                loss = loss + loss_attn * args.attn_loss_weight
+                loss = loss #+ loss_attn * args.attn_loss_weight
                 accelerator.backward(loss)
 
                 # reinitialize hook

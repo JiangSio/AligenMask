@@ -1,13 +1,13 @@
 import subprocess
 import os
 
-
+mvtec_path = '/data/gpt/real_aligen/AliGen-main/datasets/real_anomaly_set'
 # 定义要执行的Bash脚本模板
 bash_script_template = '''
 
 cd /data/gpt/real_aligen/AliGen-main/DualAnoDiff/dual-interrelated_diff
 export MODEL_NAME="runwayml/stable-diffusion-v1-5"
-export INSTANCE_DIR="none"
+export INSTANCE_DIR="/data/gpt/real_aligen/AliGen-main/datasets/real_anomaly_set"
 
 export NAME="{name}"
 export ANOMALY="{anomaly}"
@@ -21,8 +21,8 @@ CUDA_VISIBLE_DEVICES={id} accelerate launch \
     --output_dir=$OUTPUT_DIR \
     --instance_prompt="a photo of hazelnut" \
     --resolution=512 \
-    --train_batch_size=1 \
-    --gradient_accumulation_steps=4 \
+    --train_batch_size=2 \
+    --gradient_accumulation_steps=2 \
     --learning_rate=5e-5 \
     --lr_scheduler="constant" \
     --lr_warmup_steps=0 \
@@ -59,7 +59,7 @@ CUDA_VISIBLE_DEVICES={id} python generate_randommask.py
 
 bash_anomaly_generate_template='''
 cd /mnt/d/jiangtianjia/AligenReal/AliGen/anomalydiffusion
-python run-mvtecgeneratematching1.py --gpu_id={id} --data_path=../datasets/mvtec
+python run-mvtecgeneratematching1.py --gpu_id={id} --data_path={data_path}
 
 '''
 
@@ -88,11 +88,11 @@ bash_file_path = "train_shells/"+"run.sh"
 if os.path.exists(bash_file_path):
     os.remove(bash_file_path)
 os.makedirs("train_shells/",exist_ok=True)
-cuda_id = 2
+cuda_id = 1
 for name in name_list:
     
     anomalies=[]
-    for anomaly in os.listdir(os.path.join('datasets/real_anomaly_set',name,'test')):
+    for anomaly in os.listdir(os.path.join(mvtec_path,name,'test')):
         if anomaly != 'good':
             anomalies.append(anomaly)
     
@@ -107,13 +107,13 @@ for name in name_list:
         
         for anomaly in anomalies:
             bash_script = bash_script_template.format(name=name, anomaly=anomaly, id=cuda_id)
-            file.write(bash_script)
-            file.write('\n')
+            # file.write(bash_script)
+            # file.write('\n')
             
             # 生成数据：
             bash_script = bash_generate_data_template.format(name=name,id=cuda_id,anomaly=anomaly)
-            # file.write(bash_script)
-            # file.write('\n')
+            file.write(bash_script)
+            file.write('\n')
 
 with open(bash_file_path, 'a') as file:           
     # 生成mask
@@ -127,7 +127,7 @@ with open(bash_file_path, 'a') as file:
     # file.write('\n')
 
     #生成异常图像
-    bash_script = bash_anomaly_generate_template.format(id=cuda_id)
+    bash_script = bash_anomaly_generate_template.format(id=cuda_id,data_path=mvtec_path)
     # file.write(bash_script)
     # file.write('\n')
 
