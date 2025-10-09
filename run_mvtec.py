@@ -120,13 +120,13 @@ for name in name_list:
 
             #生成异常图像
             bash_script = bash_anomaly_generate_template.format(id=cuda_id, name=name, anomaly=anomaly, anomalydiffusion_path=anomalydiffusion_path, dualanodiff_path=dualanodiff_path)
-            # file.write(bash_script)
-            # file.write('\n')
+            file.write(bash_script)
+            file.write('\n')
 
         #测试
         bash_script = bash_segment_template.format(id=cuda_id, mvtec_path=mvtec_path, anomalydiffusion_path=anomalydiffusion_path, name=name, testmodel_path=testmodel_path)
-        file.write(bash_script)
-        file.write('\n')
+        # file.write(bash_script)
+        # file.write('\n')
     
 
         
