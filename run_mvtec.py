@@ -2,12 +2,15 @@ import subprocess
 import os
 
 mvtec_path = '/data/gpt/real_aligen/AliGen-main/datasets/real_anomaly_set'
+dualanodiff_path = '/data/gpt/real_aligen/AliGen-main/DualAnoDiff/dual-interrelated_diff'
+anomalydiffusion_path = '/data/gpt/real_aligen/AliGen-main/anomalydiffusion'
+testmodel_path = "/data/gpt/real_aligen/AliGen-main/anomaly_metrics"
 # 定义要执行的Bash脚本模板
 bash_script_template = '''
 
-cd /data/gpt/real_aligen/AliGen-main/DualAnoDiff/dual-interrelated_diff
+cd {dualanodiff_path}
 export MODEL_NAME="runwayml/stable-diffusion-v1-5"
-export INSTANCE_DIR="/data/gpt/real_aligen/AliGen-main/datasets/real_anomaly_set"
+export INSTANCE_DIR={mvtec_path}
 
 export NAME="{name}"
 export ANOMALY="{anomaly}"
@@ -33,7 +36,7 @@ CUDA_VISIBLE_DEVICES={id} accelerate launch \
     --rank 32 \
     --seed 32 \
     --train_text_encoder \
-    --attn_loss_weight 1
+    --attn_loss_weight 0.1
     
 # sleep 2m
     
@@ -41,31 +44,26 @@ CUDA_VISIBLE_DEVICES={id} accelerate launch \
 
 
 bash_generate_data_template='''
-cd /data/gpt/real_aligen/AliGen-main/DualAnoDiff/dual-interrelated_diff
+cd {dualanodiff_path}
 CUDA_VISIBLE_DEVICES={id} python inference_mvtec_split.py {name} {anomaly}
 # sleep 2m
 '''
 
 bash_generate_mask_template='''
-cd /data/gpt/real_aligen/AliGen-main/DualAnoDiff/dual-interrelated_diff
-CUDA_VISIBLE_DEVICES={id} python process.py
+cd {dualanodiff_path}
+CUDA_VISIBLE_DEVICES={id} python process.py {name} {anomaly}
 
-'''
-
-bash_reconstruct_data_template='''
-cd /mnt/d/jiangtianjia/AligenReal/AliGen/DiAD
-CUDA_VISIBLE_DEVICES={id} python generate_randommask.py
 '''
 
 bash_anomaly_generate_template='''
-cd /mnt/d/jiangtianjia/AligenReal/AliGen/anomalydiffusion
-python run-mvtecgeneratematching1.py --gpu_id={id} --data_path={data_path}
+cd {anomalydiffusion_path}
+python run-mvtecgeneratematching1.py --gpu_id={id} --data_path={dualanodiff_path}/generate_data --clssname={name} --anomalyname={anomaly}
 
 '''
 
 bash_segment_template='''
-cd /mnt/d/jiangtianjia/AligenReal/AliGen/anomaly_metrics
-CUDA_VISIBLE_DEVICES={id} bash metrics.sh
+cd {testmodel_path}
+CUDA_VISIBLE_DEVICES={id} python train-localization.py --generated_data_path={anomalydiffusion_path}/generated_matched_dataset  --mvtec_path={mvtec_path} --suffix=jpg --name=Anomalydiffusion+aligen --epochs=100 --clss_name={name}
 '''
 
 # ########
@@ -88,7 +86,7 @@ bash_file_path = "train_shells/"+"run.sh"
 if os.path.exists(bash_file_path):
     os.remove(bash_file_path)
 os.makedirs("train_shells/",exist_ok=True)
-cuda_id = 1
+cuda_id = 3
 for name in name_list:
     
     anomalies=[]
@@ -106,35 +104,30 @@ for name in name_list:
         # 训练模型
         
         for anomaly in anomalies:
-            bash_script = bash_script_template.format(name=name, anomaly=anomaly, id=cuda_id)
+            bash_script = bash_script_template.format(name=name, anomaly=anomaly, id=cuda_id, dualanodiff_path=dualanodiff_path, mvtec_path=mvtec_path)
             # file.write(bash_script)
             # file.write('\n')
             
             # 生成数据：
-            bash_script = bash_generate_data_template.format(name=name,id=cuda_id,anomaly=anomaly)
-            file.write(bash_script)
-            file.write('\n')
+            bash_script = bash_generate_data_template.format(name=name,id=cuda_id,anomaly=anomaly, dualanodiff_path=dualanodiff_path)
+            # file.write(bash_script)
+            # file.write('\n')
 
-with open(bash_file_path, 'a') as file:           
-    # 生成mask
-    bash_script = bash_generate_mask_template.format(id=cuda_id)
-    # file.write(bash_script)
-    # file.write('\n')
+            # 生成mask
+            bash_script = bash_generate_mask_template.format(name=name, anomaly=anomaly, id=cuda_id, dualanodiff_path=dualanodiff_path)
+            # file.write(bash_script)
+            # file.write('\n')
 
-    # 重建原图
-    bash_script = bash_reconstruct_data_template.format(id=cuda_id)
-    # file.write(bash_script)
-    # file.write('\n')
+            #生成异常图像
+            bash_script = bash_anomaly_generate_template.format(id=cuda_id, name=name, anomaly=anomaly, anomalydiffusion_path=anomalydiffusion_path, dualanodiff_path=dualanodiff_path)
+            # file.write(bash_script)
+            # file.write('\n')
 
-    #生成异常图像
-    bash_script = bash_anomaly_generate_template.format(id=cuda_id,data_path=mvtec_path)
-    # file.write(bash_script)
-    # file.write('\n')
-
-    #测试
-    bash_script = bash_segment_template.format(id=cuda_id)
-    # file.write(bash_script)
-    # file.write('\n')
+        #测试
+        bash_script = bash_segment_template.format(id=cuda_id, mvtec_path=mvtec_path, anomalydiffusion_path=anomalydiffusion_path, name=name, testmodel_path=testmodel_path)
+        file.write(bash_script)
+        file.write('\n')
+    
 
         
 subprocess.run(['chmod', '+x', bash_file_path])

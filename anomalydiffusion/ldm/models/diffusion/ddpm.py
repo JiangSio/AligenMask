@@ -713,6 +713,7 @@ class LatentDiffusion(DDPM):
         x = super().get_input(batch, k)
         total_dict={}
         name=None
+        
         if 'name' in batch:
             name=batch['name']
             total_dict['name']=name

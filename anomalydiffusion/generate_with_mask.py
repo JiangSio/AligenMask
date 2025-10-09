@@ -136,7 +136,7 @@ if __name__ == "__main__":
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
     save_dir = 'generated_dataset/%s/%s' % (sample_name, anomaly_name)
     if opt.matching:
-        save_dir = 'generated_matched_random_dataset/%s/%s' % (sample_name, anomaly_name)
+        save_dir = 'generated_matched_dataset/%s/%s' % (sample_name, anomaly_name)
     os.makedirs(save_dir,exist_ok=True)
     os.makedirs(os.path.join(save_dir,'image'), exist_ok=True)
     os.makedirs(os.path.join(save_dir, 'mask'), exist_ok=True)
@@ -145,9 +145,9 @@ if __name__ == "__main__":
     os.makedirs(os.path.join(save_dir, 'recon'), exist_ok=True)
     cnt=len(os.listdir(os.path.join(save_dir,'image')))
     with torch.no_grad():
-        for epoch in range(1000):
+        for epoch in range(500):
             for idx, batch in enumerate(dataloader):
-                if cnt>=1000:
+                if cnt>=500:
                     exit()
                 with model.ema_scope():
                     mask=batch['mask'].cpu()
@@ -166,7 +166,7 @@ if __name__ == "__main__":
                         save_image(mask[i], os.path.join(save_dir, 'mask','%d.jpg' % cnt))
                         save_image(torch.stack([(imgs[i]+1)/2,mask[i].repeat(3,1,1)],dim=0), os.path.join(save_dir, 'image-mask', '%d.jpg' % cnt))
                         cnt+=1
-                        if cnt>=1000:
+                        if cnt>=500:
                             exit()
 
 #python generate_with_mask.py --sample_name=screw --anomaly_name=thread_side --adaptive_mask

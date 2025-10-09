@@ -6,6 +6,8 @@ from skimage.morphology import disk, binary_erosion
 import numpy as np
 import torch
 import os
+import cv2
+import sys
 
 def identify_mask(img_path):
     img = Image.open(img_path)
@@ -55,21 +57,13 @@ def identify_mask(img_path):
     utils.save_image(mask, img_path.replace("image","fg"))
 
 data_root = "generate_data"
-clsses = [
-    "cable",
-    "capsules",
-    "macaroni2",
-    "metal_plate",
-    "screw",
-    "transistor",
-    "tubes",
-]
-for clss in clsses:
-    clss_path = os.path.join(data_root,clss)
-    anomalies = os.listdir(clss_path)
-    for anomaly in anomalies:
-        anomaly_path = os.path.join(clss_path,anomaly,"image")
-        files = os.listdir(anomaly_path)
-        for file in files:
-            file_path = os.path.join(anomaly_path,file)
-            identify_mask(file_path)
+args = sys.argv
+mvtec_name = args[1]
+mvtec_aomaly_name = args[2]
+clss_path = os.path.join(data_root,mvtec_name)
+
+anomaly_path = os.path.join(clss_path,mvtec_aomaly_name,"image")
+files = os.listdir(anomaly_path)
+for file in files:
+    file_path = os.path.join(anomaly_path,file)
+    identify_mask(file_path)

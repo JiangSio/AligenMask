@@ -175,8 +175,8 @@ if __name__=="__main__":
     set_seed(42)
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', type=str, default='all')
-    parser.add_argument('--suffix', type=str, default='png')
-    parser.add_argument('--sample_name', type=str, default='all')
+    parser.add_argument('--suffix', type=str, default='jpg')
+    parser.add_argument('--clss_name', type=str, required=True)
     parser.add_argument('--generated_data_path', action='store', type=str, required=True)
     parser.add_argument('--save_path', default='checkpoints/localization', type=str)
     parser.add_argument('--mvtec_path', action='store', type=str, required=True)
@@ -185,28 +185,11 @@ if __name__=="__main__":
     parser.add_argument('--epochs', action='store', type=int,default=200, required=False)
     parser.add_argument('--gpu_id', action='store', type=int, default=0, required=False)
     parser.add_argument('--log_path', action='store', type=str,default='./logs/', required=False)
-    parser.add_argument('--visualize', action='store_true')
-    parser.add_argument('--test_separately', action='store_true',default=False)
-    parser.add_argument('--reverse', action='store_true',default=False)
-    parser.add_argument('--data_name',type=str, default='text_inversion')
     args = parser.parse_args()
 
-    obj_batch =  [
-                    # "cable",
-                    "capsules",
-                    "macaroni2",
-                    "metal_plate",
-                    # "screw",
-                    # "transistor",
-                    "tubes",
-                     ]
-    if args.reverse:
-        obj_batch=reversed(obj_batch)
-    if args.sample_name!='all':
-        obj_list=[args.sample_name]
-        picked_classes = obj_list
-    else:
-        picked_classes = obj_batch
+    
+    obj_list=[args.clss_name]
+    picked_classes = obj_list
 
     with torch.cuda.device(args.gpu_id):
         train_on_device(picked_classes, args)

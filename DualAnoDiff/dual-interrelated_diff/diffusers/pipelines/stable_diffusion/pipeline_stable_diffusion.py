@@ -754,6 +754,14 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         origin_image = img
 
         img = trans(img)
+        lambda_param = 10.0
+        decreasing_sample = torch.distributions.Exponential(lambda_param).sample(img.shape)
+        decreasing_sample = torch.clamp(decreasing_sample, 0, 1)
+        decreasing_sample = torch.tensor(decreasing_sample>0.8,dtype=torch.float32)
+
+        img = img #* (1-decreasing_sample)+ torch.tensor([1,-1,-1]).unsqueeze(-1).unsqueeze(-1).repeat(1,512,512) * decreasing_sample
+        
+        # import pdb; pdb.set_trace()
         img = img.to(device)
         noise = latents
 
@@ -787,6 +795,7 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
             "to_q_lora_cache": None,"to_k_lora_cache": None,
             "record_num": 0,"attention_map": None,
         }
+        hook_handles = []
 
         # method 2
         # hook_attribute={
@@ -795,18 +804,19 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         #     "to_q_lora_cache": None,"to_k_lora_cache": None,
         #     "record_num": 0,
         # }
+        # hook_handles = []
         
         #method 1
         timesteps = timesteps[starter_idx:]
         # method 2
-        # hook_handles = []
+        
         # pass
-
+        # import pdb; pdb.set_trace()
         num_warmup_steps = 0#len(timesteps) - num_inference_steps * self.scheduler.order * (1-starter_time)
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             # import pdb;pdb.set_trace()
             for i, t in enumerate(timesteps):
-                if t == timesteps[10]:
+                if t == timesteps[0]:
 
                     # method 1
 
@@ -838,7 +848,8 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
 
                     for name, module in self.unet.named_modules():
                         if "attn2" in name and (name.endswith("to_q") or name.endswith("to_k") or name.endswith("to_q_lora") or name.endswith("to_k_lora")):  # 在SD中，attn2通常代表Cross-Attention（attn1是Self-Attention）
-                            module.register_forward_hook(hook_fn)
+                            handle = module.register_forward_hook(hook_fn)
+                            hook_handles.append(handle)
 
                     # method 2
                     # def hook_fn(module, input, output):
@@ -860,6 +871,11 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
                     #     if "attn1" in name and "up_blocks" in name and (name.endswith("to_v") or name.endswith("to_k") or name.endswith("to_v_lora") or name.endswith("to_k_lora")):  # 在SD中，attn2通常代表Cross-Attention（attn1是Self-Attention）
                     #         handle = module.register_forward_hook(hook_fn)
                     #         hook_handles.append(handle)
+
+                #method 1 & 2
+                if t == timesteps[-1]:
+                    for hook in hook_handles:
+                        hook.remove()
 
                 #method1
                 
@@ -949,7 +965,7 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         #     os.makedirs("attn_maps", exist_ok=True)
         #     results[1][j] = (results[1][j] - results[1][j].min()) / (results[1][j].max() - results[1][j].min())
         #     torchvision.utils.save_image(results[1][j], f"attn_maps/attn_map_{j}.png")
-
+        
         # method 2
         # pass
 
@@ -970,8 +986,8 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
 
         image = self.image_processor.postprocess(image, output_type=output_type, do_denormalize=do_denormalize)
         
-        ori_image = self.vae.decode(img_latents / self.vae.config.scaling_factor, return_dict=False)[0]
-        ori_image = self.image_processor.postprocess(ori_image, output_type=output_type, do_denormalize=do_denormalize)
+        
+        ori_image = origin_image
         
         # Offload last model to CPU
         if hasattr(self, "final_offload_hook") and self.final_offload_hook is not None:

@@ -21,7 +21,8 @@ class MVTecDRAEMTestDataset_partial(Dataset):
             anomaly_path = os.path.join(obj_path,anomaly)
             anomaly_files = os.listdir(anomaly_path)
             anomaly_files.sort()
-            anomaly_files = anomaly_files[4:]
+            start_idx = len(anomaly_files) // 3
+            anomaly_files = anomaly_files[start_idx:]
             self.images += [os.path.join(anomaly_path,x) for x in anomaly_files]
         good_path = os.path.join(self.root_dir,obj_name,"test","good")
         good_files = os.listdir(good_path)
@@ -98,7 +99,7 @@ class MVTec_Anomaly_Detection(Dataset):
 
         self.loader=transforms.Compose([
             transforms.ToTensor(),
-            transforms.Resize([256,256])
+            transforms.Resize([256,256], antialias=True)
         ])
         print(f'Training {sample_name} with {len(self.anomaly_names)} anomaly types and {len(self.img_paths)} samples')
 
@@ -144,7 +145,7 @@ class MVTec_classification_train(Dataset):
             self.labels+=[idx]*len(glob(os.path.join(self.root_dir,f'{anomaly}/image/*.png')))
         self.loader=transforms.Compose([
             transforms.ToTensor(),
-            transforms.Resize([256,256])
+            transforms.Resize([256,256], antialias=True)
         ])
         self.length=len(self.img_paths)
         # import pdb;pdb.set_trace()
@@ -177,7 +178,7 @@ class MVTec_classification_test(Dataset):
 
         self.loader=transforms.Compose([
             transforms.ToTensor(),
-            transforms.Resize([256,256])
+            transforms.Resize([256,256], antialias=True)
         ])
         self.length=len(self.img_paths)
         # import pdb;pdb.set_trace()

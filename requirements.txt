@@ -36,3 +36,4 @@ torchvision==0.15.2
 tqdm==4.67.1
 transformers==4.30.2
 xformers==0.0.22
+test-tube

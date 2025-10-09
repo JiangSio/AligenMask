@@ -1415,9 +1415,29 @@ def main(args):
                     # Add the prior loss to the instance loss.
                     loss = loss + args.prior_loss_weight * prior_loss
                 else:
-                    loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+                    # loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+                    # 1. 计算每个元素的 MSE 损失（不进行 reduction）
                     
-
+                    elementwise_loss = F.mse_loss(model_pred.float(), target.float(), reduction='none')
+                    
+                    # 2. 创建权重张量
+                    batch_gt=torch.concat(batch["gt"]).unsqueeze(1)
+                    weights = batch_gt * 1.0 + (1 - batch_gt) * 0.5
+                    
+                    # 3. 应用权重
+                    weighted_loss = elementwise_loss * weights
+                    
+                    # 4. 计算加权平均损失
+                    # 方法1：直接平均（所有元素权重相等）
+                    # loss = torch.mean(weighted_loss)
+                    
+                    # 方法2：考虑权重的加权平均（推荐）
+                    # 计算权重总和
+                    total_weight = torch.sum(weights)
+                    # 计算加权损失总和
+                    weighted_loss_sum = torch.sum(weighted_loss)
+                    # 计算加权平均损失
+                    loss = weighted_loss_sum / total_weight
                 
                 # import pdb;pdb.set_trace()
 
@@ -1428,7 +1448,7 @@ def main(args):
                 results = (results - results.min()) / (results.max() - results.min())
                 loss_attn = F.mse_loss(torch.cat(batch["mask"]), results, reduction="mean")
 
-                loss = loss #+ loss_attn * args.attn_loss_weight
+                loss = loss + loss_attn * args.attn_loss_weight
                 accelerator.backward(loss)
 
                 # reinitialize hook

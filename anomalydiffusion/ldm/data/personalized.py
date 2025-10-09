@@ -165,7 +165,7 @@ class Personalized_mvtec_encoder(Dataset):
         if data_enhance:
             size=512
         self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
+        self.interpolation = {"linear": PIL.Image.BILINEAR,
                               "bilinear": PIL.Image.BILINEAR,
                               "bicubic": PIL.Image.BICUBIC,
                               "lanczos": PIL.Image.LANCZOS,
@@ -174,19 +174,7 @@ class Personalized_mvtec_encoder(Dataset):
         cnt=0
         for sample_name,anomaly_name in sample_anomaly_pairs:
             # 这里全是异常的目标类别和异常名称
-            if sample_name not in [
-                "screw",
-                "capsule",
-                "pill",
-                "toothbrush",
-                "bottle",
-                "cable",
-                "hazelnut",
-                "metal_nut",
-                "transistor",
-                "zipper"
-                ]:
-                continue
+            
             img_path=os.path.join(self.data_root,sample_name,'test',anomaly_name)
             mask_path=os.path.join(self.data_root,sample_name,'ground_truth',anomaly_name)
             img_files=os.listdir(img_path)
@@ -197,13 +185,14 @@ class Personalized_mvtec_encoder(Dataset):
             mask_files=[os.path.join(mask_path,file_name) for file_name in mask_files]
             print(sample_name,anomaly_name,len(img_files))
             for idx in range(len(img_files)):
-                # if set=='train' and idx>len(img_files)//3:# 训练集只用所有NG的1/3 1258/3=416
-                #     break
-                # if set!='train': # 测试集用NG数据的2/3
-                #     if idx<len(img_files)//3:
-                #         continue
-                #     elif idx>len(img_files)//3+1:
-                #         break
+                if set=='train' and idx>len(img_files)//3:# 训练集只用所有NG的1/3 1258/3=416
+                    break
+                if set!='train': # 测试集用NG数据的2/3, 验证用一个
+                    
+                    if idx<len(img_files)//3:
+                        continue
+                    elif idx>len(img_files)//3+1:
+                        break
                 mask_filename = mask_files[idx]
                 img_filename = img_files[idx]
                 image = Image.open(img_filename)
@@ -321,7 +310,7 @@ class Personalized_mvtec_mask(Dataset):
             self._length = 4
 
         self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
+        self.interpolation = {"linear": PIL.Image.BILINEAR,
                               "bilinear": PIL.Image.BILINEAR,
                               "bicubic": PIL.Image.BICUBIC,
                               "lanczos": PIL.Image.LANCZOS,
@@ -406,7 +395,7 @@ class Positive_sample_with_generated_mask(Dataset):
             self._length = 4
 
         self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
+        self.interpolation = {"linear": PIL.Image.BILINEAR,
                               "bilinear": PIL.Image.BILINEAR,
                               "bicubic": PIL.Image.BICUBIC,
                               "lanczos": PIL.Image.LANCZOS,
@@ -510,7 +499,7 @@ class Positive_sample_with_matching_mask(Dataset):
             self._length = 4
 
         self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
+        self.interpolation = {"linear": PIL.Image.BILINEAR,
                               "bilinear": PIL.Image.BILINEAR,
                               "bicubic": PIL.Image.BICUBIC,
                               "lanczos": PIL.Image.LANCZOS,
@@ -638,7 +627,7 @@ class Positive_sample_with_ratio_matching_mask(Dataset):
             self._length = 4
 
         self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
+        self.interpolation = {"linear": PIL.Image.BILINEAR,
                               "bilinear": PIL.Image.BILINEAR,
                               "bicubic": PIL.Image.BICUBIC,
                               "lanczos": PIL.Image.LANCZOS,
@@ -725,10 +714,9 @@ class Positive_sample_with_matching_random_mask(Dataset):
                  ):
         self.name=sample_name + '+' + anomaly_name
         self.data_root = root_path
-        self.data_root = "../DiAD/output1000_random"
         self.output_path=os.path.join(self.data_root,sample_name,anomaly_name)
-        img_files=glob.glob(f"{self.output_path}/*samples.jpg")
-        mask_files=glob.glob(f"{self.output_path}/*mask.jpg")
+        img_files=glob.glob(f"{self.output_path}/origin/*.png")
+        mask_files=glob.glob(f"{self.output_path}/fg/*.png")
         
         img_files.sort()
         mask_files.sort()
@@ -755,7 +743,7 @@ class Positive_sample_with_matching_random_mask(Dataset):
             self._length = 4
 
         self.size = size
-        self.interpolation = {"linear": PIL.Image.LINEAR,
+        self.interpolation = {"linear": PIL.Image.BILINEAR,
                               "bilinear": PIL.Image.BILINEAR,
                               "bicubic": PIL.Image.BICUBIC,
                               "lanczos": PIL.Image.LANCZOS,

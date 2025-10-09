@@ -1,4 +1,4 @@
-path_to_mvtec_dataset="/home/guangpintao/jiangtianjia/datasets/jsons/mvtec/train_4_shot"
+path_to_mvtec_dataset="/data/gpt/real_aligen/AliGen-main/datasets/real_anomaly_set"
 CUDA_VISIBLE_DEVICES=1 python main.py --spatial_encoder_embedding --data_enhance \
  --base configs/latent-diffusion/txt2img-1p4B-finetune-encoder+embedding.yaml -t \
  --actual_resume models/ldm/text2img-large/model.ckpt -n test --gpus 0, \
