@@ -1,6 +1,4 @@
-anomalydiffusion/generated_mask
-anomalydiffusion/generated_matched_random_dataset*/
-anomalydiffusion/generated_dataset*/
+anomalydiffusion/generated*/
 DualAnoDiff/dual-interrelated_diff/generate_data*/
 anomaly_metrics/logs*/
 stable-diffusion-v1-5/
