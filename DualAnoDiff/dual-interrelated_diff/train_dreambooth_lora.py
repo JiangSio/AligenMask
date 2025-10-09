@@ -545,36 +545,12 @@ class DreamBoothDataset(Dataset):
         else:
             self.class_data_root = None
 
-        if mvtec_name == 'cable':
-            self.image_transforms = transforms.Compose(
-                [
-                    transforms.Resize((size,size), interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.CenterCrop(size),
-                    transforms.ToTensor(),
-                    transforms.Normalize([0.5], [0.5]),
-                ]
-            )
-            self.image_transforms_mask = transforms.Compose(
-                [
-                    transforms.Resize((size,size), interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.CenterCrop(size),
-                    transforms.ToTensor(),
-                ]
-            )
-            
-            self.image_transforms_gt = transforms.Compose(
-                [
-                    transforms.Resize((64,64), interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.CenterCrop(64),
-                    transforms.ToTensor(),
-                ]
-            )
-        else:
+        if mvtec_name in ['cable','capsules',"transistor"]:
             self.image_transforms = transforms.Compose(
                 [
                     transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((size,size), fill=0, padding_mode='reflect'),
-                    transforms.RandomAffine(degrees=0,translate=(0.2, 0.2),fill=0),
+                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
+                    transforms.RandomAffine(degrees=0,translate=(0.1, 0.1),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((size,size)),
@@ -584,8 +560,8 @@ class DreamBoothDataset(Dataset):
             self.image_transforms_mask = transforms.Compose(
                 [
                     transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((size,size), fill=0, padding_mode='reflect'),
-                    transforms.RandomAffine(degrees=0,translate=(0.2, 0.2),fill=0),
+                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
+                    transforms.RandomAffine(degrees=0,translate=(0.1, 0.1),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((size,size)),
@@ -596,8 +572,43 @@ class DreamBoothDataset(Dataset):
             self.image_transforms_gt = transforms.Compose(
                 [
                     transforms.Resize((64,64),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((64,64), fill=0, padding_mode='reflect'),
-                    transforms.RandomAffine(degrees=0,translate=(0.2, 0.2),fill=0),
+                    transforms.Pad((64,64), fill=0, padding_mode='symmetric'),
+                    transforms.RandomAffine(degrees=0,translate=(0.1, 0.1),fill=0),
+                    transforms.RandomHorizontalFlip(0.5),
+                    transforms.RandomVerticalFlip(0.5),
+                    transforms.CenterCrop((64,64)),
+                    transforms.ToTensor(),
+                ]
+            )
+        else:
+            self.image_transforms = transforms.Compose(
+                [
+                    transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
+                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
+                    transforms.RandomAffine(degrees=45,translate=(0.1, 0.1),fill=0),
+                    transforms.RandomHorizontalFlip(0.5),
+                    transforms.RandomVerticalFlip(0.5),
+                    transforms.CenterCrop((size,size)),
+                    transforms.ToTensor(),
+                ]
+            )
+            self.image_transforms_mask = transforms.Compose(
+                [
+                    transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
+                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
+                    transforms.RandomAffine(degrees=45,translate=(0.1, 0.1),fill=0),
+                    transforms.RandomHorizontalFlip(0.5),
+                    transforms.RandomVerticalFlip(0.5),
+                    transforms.CenterCrop((size,size)),
+                    transforms.ToTensor(),
+                ]
+            )
+            
+            self.image_transforms_gt = transforms.Compose(
+                [
+                    transforms.Resize((64,64),interpolation=transforms.InterpolationMode.BILINEAR),
+                    transforms.Pad((64,64), fill=0, padding_mode='symmetric'),
+                    transforms.RandomAffine(degrees=45,translate=(0.1, 0.1),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((64,64)),
@@ -1309,6 +1320,7 @@ def main(args):
         if args.train_text_encoder:
             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
+            # import pdb;pdb.set_trace()
             
             # from torchvision import utils
             # utils.save_image((((batch["pixel_value_blends"][0]+1)/2)),"1.png")
