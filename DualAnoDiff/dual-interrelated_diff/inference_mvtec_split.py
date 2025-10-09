@@ -6,9 +6,6 @@ import os
 from PIL import Image
 import torch
 
-mvtec_path = '/data/gpt/real_aligen/AliGen-main/datasets/real_anomaly_set'
-
-
 sys.path.append('.')
 pipe = DiffusionPipeline.from_pretrained(
     "runwayml/stable-diffusion-v1-5", safety_checker=None
@@ -17,6 +14,7 @@ pipe = DiffusionPipeline.from_pretrained(
 args = sys.argv
 mvtec_name = args[1]
 mvtec_aomaly_name = args[2]
+mvtec_path = args[3]
 # ##############
 pipe.load_lora_weights('./generate_data/'+mvtec_name+'/'+mvtec_aomaly_name+'/checkpoint-2000')
 

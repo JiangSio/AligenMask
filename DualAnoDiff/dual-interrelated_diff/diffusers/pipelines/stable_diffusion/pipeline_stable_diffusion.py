@@ -769,7 +769,7 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         img_latents = self.vae.config.scaling_factor * img_latents
 
         # method 1
-        starter_time = 50 / num_inference_steps
+        starter_time = 40 / num_inference_steps
         starter_idx = int(starter_time* len(timesteps))
         # method 2
         # pass

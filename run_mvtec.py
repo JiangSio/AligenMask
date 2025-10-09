@@ -45,7 +45,7 @@ CUDA_VISIBLE_DEVICES={id} accelerate launch \
 
 bash_generate_data_template='''
 cd {dualanodiff_path}
-CUDA_VISIBLE_DEVICES={id} python inference_mvtec_split.py {name} {anomaly}
+CUDA_VISIBLE_DEVICES={id} python inference_mvtec_split.py {name} {anomaly} {mvtec_path}
 # sleep 2m
 '''
 
@@ -70,10 +70,10 @@ CUDA_VISIBLE_DEVICES={id} python train-localization.py --generated_data_path={an
 
 name_list = [
     # "cable",
-    # "capsules",
+    "capsules",
     # "macaroni2",
     # "metal_plate",
-    "screw",
+    # "screw",
     # "transistor",
     # "tubes",
     # "bottle",
@@ -105,13 +105,13 @@ for name in name_list:
         
         for anomaly in anomalies:
             bash_script = bash_script_template.format(name=name, anomaly=anomaly, id=cuda_id, dualanodiff_path=dualanodiff_path, mvtec_path=mvtec_path)
-            file.write(bash_script)
-            file.write('\n')
-            
-            # 生成数据：
-            bash_script = bash_generate_data_template.format(name=name,id=cuda_id,anomaly=anomaly, dualanodiff_path=dualanodiff_path)
             # file.write(bash_script)
             # file.write('\n')
+            
+            # 生成数据：
+            bash_script = bash_generate_data_template.format(name=name,id=cuda_id,anomaly=anomaly, dualanodiff_path=dualanodiff_path, mvtec_path=mvtec_path)
+            file.write(bash_script)
+            file.write('\n')
 
             # 生成mask
             bash_script = bash_generate_mask_template.format(name=name, anomaly=anomaly, id=cuda_id, dualanodiff_path=dualanodiff_path)
