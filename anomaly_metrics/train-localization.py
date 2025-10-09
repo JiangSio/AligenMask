@@ -12,7 +12,7 @@ from unet_utils.model_unet import DiscriminativeSubNetwork
 import os
 from unet_utils.au_pro_util import calculate_au_pro
 import random
-import cv2
+import swanlab
 
 def set_seed(seed):
     random.seed(seed)
@@ -112,7 +112,8 @@ def test(args,obj_name,model_seg):
     print("AP Pixel:  " +str(ap_pixel))
     print('PRO Pixel:' +str(pro_pixel))
     print("==============================")
-    return float(auroc),float(auroc_pixel),float(ap_pixel),float(pro_pixel)
+    swanlab.log({"AUC Image":auroc,"AP Image":ap,"AUC Pixel":auroc_pixel,"AP Pixel":ap_pixel,"PRO Pixel":pro_pixel})
+    return float(auroc),float(ap),float(auroc_pixel),float(ap_pixel),float(pro_pixel)
 
 
 def train_on_device(obj_names, args):
@@ -139,7 +140,7 @@ def train_on_device(obj_names, args):
         dataset = MVTec_Anomaly_Detection(args,obj_name,suffix=args.suffix)
         dataloader = DataLoader(dataset, batch_size=args.bs,shuffle=True, num_workers=16)
         auroc_is, auroc_pxs,ap_pxs,pro_pxs=[],[],[],[]
-        max_auroc_is, max_auroc_pxs,max_ap_pxs,max_pro_pxs = 0,0,0,0
+        max_auroc_is, max_ap_is,max_auroc_pxs,max_ap_pxs,max_pro_pxs = 0,0,0,0,0
         for epoch in range(args.epochs):
             model_seg.train()
             
@@ -155,20 +156,20 @@ def train_on_device(obj_names, args):
                 loss.backward()
                 optimizer.step()
             scheduler.step()
-            auroc,auroc_px,ap_px,pro_px=test(args,obj_name, model_seg)
+            auroc,ap,auroc_px,ap_px,pro_px=test(args,obj_name, model_seg)
             # if epoch/args.epochs>0.9:
             #     auroc_is.append(img_ap)
             #     auroc_pxs.append(auroc_px)
             #     ap_pxs.append(ap_px)
             #     pro_pxs.append(pro_px)
             if max_auroc_pxs < auroc_px:
-                max_auroc_is, max_auroc_pxs,max_ap_pxs,max_pro_pxs=auroc,auroc_px,ap_px,pro_px
+                max_auroc_is, max_ap_is,max_auroc_pxs,max_ap_pxs,max_pro_pxs=auroc,ap,auroc_px,ap_px,pro_px
             # if sum_metric>last_sum:
             #     last_sum=sum_metric
             # os.makedirs(os.path.join(args.save_path,args.setting),exist_ok=True)
             # torch.save(model_seg.state_dict(), os.path.join(args.save_path,args.setting, run_name + ".pckl"))
         with open(os.path.join(args.log_path,f"{args.name}.txt"),'a') as wf:
-            wf.write(f'{obj_name},{max_auroc_is},{max_auroc_pxs},{max_ap_pxs},{max_pro_pxs}\n')
+            wf.write(f'{obj_name},{max_auroc_is},{max_ap_is},{max_auroc_pxs},{max_ap_pxs},{max_pro_pxs}\n')
 
 if __name__=="__main__":
     import argparse
@@ -191,8 +192,25 @@ if __name__=="__main__":
     obj_list=[args.clss_name]
     picked_classes = obj_list
 
+
+    # 1. 开启一个SwanLab实验
+    swanlab.login(api_key="jiuBHmVPiNvWvogwefpIl")
+    
+    swanlab_config={
+        "name": args.name,
+        "clss_name": args.clss_name,
+        "log_path": args.log_path,
+    }
+    run = swanlab.init(
+        project="aligen",
+        description="",
+        config=swanlab_config,
+        # mode='disabled',
+    )
+
     with torch.cuda.device(args.gpu_id):
         train_on_device(picked_classes, args)
+    swanlab
 #python train-unet.py --data_path $path_to_the_generated_data  --save_path ./ --mvtec_path=$path_to_mvtec --sample_name=capsule
 
 
