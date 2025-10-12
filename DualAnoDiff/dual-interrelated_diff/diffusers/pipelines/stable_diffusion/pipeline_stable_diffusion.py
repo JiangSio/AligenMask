@@ -17,7 +17,8 @@ import warnings
 from typing import Any, Callable, Dict, List, Optional, Union
 import os
 import random
-import json
+import numpy as np
+import cv2
 
 import torch
 from packaging import version
@@ -752,7 +753,24 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
                 ]
             )
         origin_image = img
+        def pil_to_canny(pil_image, low_threshold=100, high_threshold=200):
+            # 将 PIL 图像转换为 NumPy 数组（OpenCV 格式）
+            numpy_image = np.array(pil_image)
 
+            # 转换 RGB 为 BGR（OpenCV 默认格式）
+            if numpy_image.ndim == 3:  # 彩色图像
+                opencv_image = cv2.cvtColor(numpy_image, cv2.COLOR_RGB2BGR)
+                # 转换为灰度图
+                gray_image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2GRAY)
+            else:  # 灰度图像
+                gray_image = numpy_image
+
+            # 应用 Canny 边缘检测
+            edges = cv2.Canny(gray_image, low_threshold, high_threshold)
+
+            # 将边缘检测结果转换回 PIL 图像
+            return Image.fromarray(edges)
+        img = pil_to_canny(img).convert("RGB")
         img = trans(img)
         lambda_param = 10.0
         decreasing_sample = torch.distributions.Exponential(lambda_param).sample(img.shape)

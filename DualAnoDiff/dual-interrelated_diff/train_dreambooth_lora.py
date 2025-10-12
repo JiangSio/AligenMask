@@ -485,6 +485,23 @@ def parse_args(input_args=None):
 
     return args
 
+def pil_to_canny(pil_image, low_threshold=100, high_threshold=200):
+    # 将 PIL 图像转换为 NumPy 数组（OpenCV 格式）
+    numpy_image = np.array(pil_image)
+
+    # 转换 RGB 为 BGR（OpenCV 默认格式）
+    if numpy_image.ndim == 3:  # 彩色图像
+        opencv_image = cv2.cvtColor(numpy_image, cv2.COLOR_RGB2BGR)
+        # 转换为灰度图
+        gray_image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2GRAY)
+    else:  # 灰度图像
+        gray_image = numpy_image
+
+    # 应用 Canny 边缘检测
+    edges = cv2.Canny(gray_image, low_threshold, high_threshold)
+
+    # 将边缘检测结果转换回 PIL 图像
+    return Image.fromarray(edges)
 
 class DreamBoothDataset(Dataset):
     """
@@ -580,6 +597,41 @@ class DreamBoothDataset(Dataset):
                     transforms.ToTensor(),
                 ]
             )
+        elif mvtec_name in ['screw']:
+            self.image_transforms = transforms.Compose(
+                [
+                    transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
+                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
+                    transforms.RandomAffine(degrees=45,translate=(0, 0),fill=0),
+                    transforms.RandomHorizontalFlip(0.5),
+                    transforms.RandomVerticalFlip(0.5),
+                    transforms.CenterCrop((size,size)),
+                    transforms.ToTensor(),
+                ]
+            )
+            self.image_transforms_mask = transforms.Compose(
+                [
+                    transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
+                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
+                    transforms.RandomAffine(degrees=45,translate=(0, 0),fill=0),
+                    transforms.RandomHorizontalFlip(0.5),
+                    transforms.RandomVerticalFlip(0.5),
+                    transforms.CenterCrop((size,size)),
+                    transforms.ToTensor(),
+                ]
+            )
+            
+            self.image_transforms_gt = transforms.Compose(
+                [
+                    transforms.Resize((64,64),interpolation=transforms.InterpolationMode.BILINEAR),
+                    transforms.Pad((64,64), fill=0, padding_mode='symmetric'),
+                    transforms.RandomAffine(degrees=45,translate=(0, 0),fill=0),
+                    transforms.RandomHorizontalFlip(0.5),
+                    transforms.RandomVerticalFlip(0.5),
+                    transforms.CenterCrop((64,64)),
+                    transforms.ToTensor(),
+                ]
+            )
         else:
             self.image_transforms = transforms.Compose(
                 [
@@ -616,7 +668,6 @@ class DreamBoothDataset(Dataset):
                 ]
             )
         self.transform_normalize = transforms.Normalize([0.5], [0.5])
-        
 
     def __len__(self):
         return self._length
@@ -634,7 +685,7 @@ class DreamBoothDataset(Dataset):
             instance_image_blend = instance_image_blend.convert("RGB")
         if not mask.mode == "L":
             mask = mask.convert("L")
-        
+        instance_image_blend = pil_to_canny(instance_image_blend).convert("RGB")
         # instance_image_blend.save("1.png")
         # mask.save("2.png")
         # transform imgs
@@ -1320,7 +1371,6 @@ def main(args):
         if args.train_text_encoder:
             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
-            # import pdb;pdb.set_trace()
             
             # from torchvision import utils
             # utils.save_image((((batch["pixel_value_blends"][0]+1)/2)),"1.png")

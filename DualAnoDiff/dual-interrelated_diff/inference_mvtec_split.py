@@ -6,6 +6,7 @@ import os
 from PIL import Image
 import torch
 
+
 sys.path.append('.')
 pipe = DiffusionPipeline.from_pretrained(
     "runwayml/stable-diffusion-v1-5", safety_checker=None

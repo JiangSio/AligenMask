@@ -155,6 +155,7 @@ def train_on_device(obj_names, args):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+                swanlab.log({"training_loss":loss.item()})
             scheduler.step()
             auroc,ap,auroc_px,ap_px,pro_px=test(args,obj_name, model_seg)
             # if epoch/args.epochs>0.9:
@@ -200,6 +201,8 @@ if __name__=="__main__":
         "name": args.name,
         "clss_name": args.clss_name,
         "log_path": args.log_path,
+        "learning_rate": args.lr,
+        "batch_size": args.bs,
     }
     run = swanlab.init(
         project="aligen",
@@ -210,7 +213,7 @@ if __name__=="__main__":
 
     with torch.cuda.device(args.gpu_id):
         train_on_device(picked_classes, args)
-    swanlab
+    swanlab.finish()
 #python train-unet.py --data_path $path_to_the_generated_data  --save_path ./ --mvtec_path=$path_to_mvtec --sample_name=capsule
 
 
