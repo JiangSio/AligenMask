@@ -11,3 +11,7 @@ datasets/real_data.zip
 __pycache__/
 *.pyc
 DualAnoDiff/dual-interrelated_diff/attn_maps/
+anogen/DIFFUSION/logs*/
+train_shells/
+anogen/DIFFUSION/models/
+anogen/DIFFUSION/visa_masks

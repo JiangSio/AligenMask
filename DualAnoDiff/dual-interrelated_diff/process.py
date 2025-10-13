@@ -21,7 +21,7 @@ def identify_mask(img_path):
         )
     img = trans(img)
     # import pdb;pdb.set_trace()
-    m0 = img[0] > 0.5
+    m0 = img[0] > -0.0
     m1 = img[1] <-0.5
     m2 = img[2] <-0.5
     mask = m0 & m1 & m2

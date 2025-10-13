@@ -1,10 +1,11 @@
 import subprocess
 import os
 
-mvtec_path = '/data/gpt/real_aligen/AliGen-main/datasets/real_anomaly_set'
-dualanodiff_path = '/data/gpt/real_aligen/AliGen-main/DualAnoDiff/dual-interrelated_diff'
-anomalydiffusion_path = '/data/gpt/real_aligen/AliGen-main/anomalydiffusion'
-testmodel_path = "/data/gpt/real_aligen/AliGen-main/anomaly_metrics"
+mvtec_path = '/data1/gpt/datasets/mvtec'
+dualanodiff_path = '/data1/gpt/jtj/AligenMask-main/DualAnoDiff/dual-interrelated_diff'
+anomalydiffusion_path = '/data1/gpt/jtj/AligenMask-main/anomalydiffusion'
+testmodel_path = "/data1/gpt/jtj/AligenMask-main/anomaly_metrics"
+cuda_id = 1
 # 定义要执行的Bash脚本模板
 bash_script_template = '''
 
@@ -63,17 +64,17 @@ python run-mvtecgeneratematching1.py --gpu_id={id} --data_path={dualanodiff_path
 
 bash_segment_template='''
 cd {testmodel_path}
-CUDA_VISIBLE_DEVICES={id} python train-localization.py --generated_data_path={anomalydiffusion_path}/generated_matched_dataset  --mvtec_path={mvtec_path} --suffix=jpg --name=Anomalydiffusion+aligen --epochs=100 --clss_name={name}
+CUDA_VISIBLE_DEVICES={id} python train-localization.py --generated_data_path={anomalydiffusion_path}/generated_matched_dataset  --mvtec_path={mvtec_path} --suffix=jpg --name=Anomalydiffusion+aligen --epochs=100 --clss_name={name} --bs={bs} --lr={lr}
 '''
 
 # ########
 
 name_list = [
     # "cable",
-    "capsules",
+    # "capsules",
     # "macaroni2",
     # "metal_plate",
-    # "screw",
+    "screw",
     # "transistor",
     # "tubes",
     # "bottle",
@@ -86,7 +87,7 @@ bash_file_path = "train_shells/"+"run.sh"
 if os.path.exists(bash_file_path):
     os.remove(bash_file_path)
 os.makedirs("train_shells/",exist_ok=True)
-cuda_id = 3
+
 for name in name_list:
     
     anomalies=[]
@@ -122,9 +123,10 @@ for name in name_list:
             bash_script = bash_anomaly_generate_template.format(id=cuda_id, name=name, anomaly=anomaly, anomalydiffusion_path=anomalydiffusion_path, dualanodiff_path=dualanodiff_path)
             # file.write(bash_script)
             # file.write('\n')
-
+        
         #测试
-        bash_script = bash_segment_template.format(id=cuda_id, mvtec_path=mvtec_path, anomalydiffusion_path=anomalydiffusion_path, name=name, testmodel_path=testmodel_path)
+        
+        bash_script = bash_segment_template.format(id=cuda_id, mvtec_path=mvtec_path, anomalydiffusion_path=anomalydiffusion_path, name=name, testmodel_path=testmodel_path,bs=16,lr=0.0001)
         # file.write(bash_script)
         # file.write('\n')
     
