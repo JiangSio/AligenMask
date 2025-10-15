@@ -562,7 +562,7 @@ class DreamBoothDataset(Dataset):
         else:
             self.class_data_root = None
 
-        if mvtec_name in ['cable','capsules',"transistor"]:
+        if mvtec_name in ['transistor']:
             self.image_transforms = transforms.Compose(
                 [
                     transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
@@ -597,12 +597,12 @@ class DreamBoothDataset(Dataset):
                     transforms.ToTensor(),
                 ]
             )
-        elif mvtec_name in ['screw']:
+        elif mvtec_name in ['screw_single']:
             self.image_transforms = transforms.Compose(
                 [
                     transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
                     transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=45,translate=(0, 0),fill=0),
+                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((size,size)),
@@ -613,7 +613,7 @@ class DreamBoothDataset(Dataset):
                 [
                     transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
                     transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=45,translate=(0, 0),fill=0),
+                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((size,size)),
@@ -625,7 +625,7 @@ class DreamBoothDataset(Dataset):
                 [
                     transforms.Resize((64,64),interpolation=transforms.InterpolationMode.BILINEAR),
                     transforms.Pad((64,64), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=45,translate=(0, 0),fill=0),
+                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((64,64)),
@@ -637,7 +637,7 @@ class DreamBoothDataset(Dataset):
                 [
                     transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
                     transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=45,translate=(0.1, 0.1),fill=0),
+                    transforms.RandomAffine(degrees=180,translate=(0.1, 0.1),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((size,size)),
@@ -648,7 +648,7 @@ class DreamBoothDataset(Dataset):
                 [
                     transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
                     transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=45,translate=(0.1, 0.1),fill=0),
+                    transforms.RandomAffine(degrees=180,translate=(0.1, 0.1),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((size,size)),
@@ -660,7 +660,7 @@ class DreamBoothDataset(Dataset):
                 [
                     transforms.Resize((64,64),interpolation=transforms.InterpolationMode.BILINEAR),
                     transforms.Pad((64,64), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=45,translate=(0.1, 0.1),fill=0),
+                    transforms.RandomAffine(degrees=180,translate=(0.1, 0.1),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((64,64)),

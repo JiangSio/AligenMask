@@ -1,11 +1,11 @@
 import subprocess
 import os
 
-mvtec_path = '/data1/gpt/datasets/mvtec'
-dualanodiff_path = '/data1/gpt/jtj/AligenMask-main/DualAnoDiff/dual-interrelated_diff'
-anomalydiffusion_path = '/data1/gpt/jtj/AligenMask-main/anomalydiffusion'
-testmodel_path = "/data1/gpt/jtj/AligenMask-main/anomaly_metrics"
-cuda_id = 1
+mvtec_path = '/data1/gpt/jtj/asynthesis_data'
+dualanodiff_path = '/data1/gpt/jtj/AligenMask/DualAnoDiff/dual-interrelated_diff'
+anomalydiffusion_path = '/data1/gpt/jtj/AligenMask/anomalydiffusion'
+testmodel_path = "/data1/gpt/jtj/AligenMask/anomaly_metrics"
+cuda_id = 5
 # 定义要执行的Bash脚本模板
 bash_script_template = '''
 
@@ -70,17 +70,26 @@ CUDA_VISIBLE_DEVICES={id} python train-localization.py --generated_data_path={an
 # ########
 
 name_list = [
-    # "cable",
-    # "capsules",
-    # "macaroni2",
-    # "metal_plate",
-    "screw",
-    # "transistor",
-    # "tubes",
-    # "bottle",
-    # "toothbrush",
-    # "carpet",
-    # "wood",
+    "bottle", 
+	"cable", 
+	# "capsule", 
+	# "capsules", 
+	# "cashew", 
+	# "chewinggum", 
+	# "fryum", 
+	# "hazelnut", 
+	# "macaroni", 
+	# "metal_nut", 
+	# "pcb1", 
+	# "pcb2", 
+	# "pcb3", 
+	# "pcb4", 
+	# "pill", 
+	# "pipe_fryum", 
+	# "screw", 
+	# "screw_single", 
+	# "toothbrush", 
+	# "tubes", 
     ]
 
 bash_file_path = "train_shells/"+"run.sh"
@@ -106,8 +115,8 @@ for name in name_list:
         
         for anomaly in anomalies:
             bash_script = bash_script_template.format(name=name, anomaly=anomaly, id=cuda_id, dualanodiff_path=dualanodiff_path, mvtec_path=mvtec_path)
-            # file.write(bash_script)
-            # file.write('\n')
+            file.write(bash_script)
+            file.write('\n')
             
             # 生成数据：
             bash_script = bash_generate_data_template.format(name=name,id=cuda_id,anomaly=anomaly, dualanodiff_path=dualanodiff_path, mvtec_path=mvtec_path)
@@ -116,8 +125,8 @@ for name in name_list:
 
             # 生成mask
             bash_script = bash_generate_mask_template.format(name=name, anomaly=anomaly, id=cuda_id, dualanodiff_path=dualanodiff_path)
-            # file.write(bash_script)
-            # file.write('\n')
+            file.write(bash_script)
+            file.write('\n')
 
             #生成异常图像
             bash_script = bash_anomaly_generate_template.format(id=cuda_id, name=name, anomaly=anomaly, anomalydiffusion_path=anomalydiffusion_path, dualanodiff_path=dualanodiff_path)

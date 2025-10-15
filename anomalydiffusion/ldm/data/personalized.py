@@ -179,8 +179,8 @@ class Personalized_mvtec_encoder(Dataset):
             mask_path=os.path.join(self.data_root,sample_name,'ground_truth',anomaly_name)
             img_files=os.listdir(img_path)
             mask_files=os.listdir(mask_path)
-            img_files.sort(key=lambda x:int(x[:3]))
-            mask_files.sort(key=lambda x: int(x[:3]))
+            img_files.sort()
+            mask_files.sort()
             img_files=[os.path.join(img_path,file_name) for file_name in img_files]
             mask_files=[os.path.join(mask_path,file_name) for file_name in mask_files]
             print(sample_name,anomaly_name,len(img_files))
