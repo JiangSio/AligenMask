@@ -156,8 +156,6 @@ if __name__ == "__main__":
                     imgs=images['samples_inpainting'].cpu()
                     recon_image=images['reconstruction']
                     for i in range(len(imgs)):
-                        if mask[i].sum()==0:
-                            continue
                         save_image((imgs[i] + 1) / 2, os.path.join(save_dir, 'image', '%d.jpg' % cnt), normalize=False)
                         save_image((ori_images[i] + 1) / 2, os.path.join(save_dir, 'ori', '%d.jpg' % cnt),
                                    normalize=False)
