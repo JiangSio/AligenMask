@@ -29,7 +29,7 @@ cnt = len(os.listdir(os.path.join(target_path,'image')))
 # for i in range(cnt,1000):
 for i in range(cnt,500):
     
-    outputs,origin_image = pipe(prompt_blend='a vfx with large red marker sks',num_inference_steps=100,guidance_scale=2.5,class_id = mvtec_name, data_dir = mvtec_path)
+    outputs,origin_image = pipe(prompt_blend='a vfx with large red marker sks',num_inference_steps=100,guidance_scale=8.5,class_id = mvtec_name, data_dir = mvtec_path)
     outputs.images[0].save(os.path.join(target_path,'image',str(i)+".png"))
     
     os.makedirs(os.path.join(target_path,'origin'),exist_ok=True)

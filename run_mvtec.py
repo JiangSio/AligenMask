@@ -70,12 +70,12 @@ CUDA_VISIBLE_DEVICES={id} python train-localization.py --generated_data_path={an
 # ########
 
 name_list = [
-    "bottle", 
-	"cable", 
-	# "capsule", 
-	# "capsules", 
-	# "cashew", 
-	# "chewinggum", 
+    # "bottle", 
+	# "cable", 
+	"capsule", 
+	"capsules", 
+	"cashew", 
+	"chewinggum", 
 	# "fryum", 
 	# "hazelnut", 
 	# "macaroni", 

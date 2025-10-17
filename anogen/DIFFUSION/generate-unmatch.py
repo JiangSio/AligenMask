@@ -174,16 +174,16 @@ if __name__ == "__main__":
         sampler = PLMSSampler(model)
     else:
         sampler = DDIMSampler(model)
-    directory="./visa_masks"
+    directory="./data_masks"
     root_dir="/data1/gpt/jtj/asynthesis_data"
     
     # image_prompt = opt.image_prompt
     # mask_prompt = opt.mask_prompt
     
-    import pdb; pdb.set_trace()
+    
     objects=os.listdir(root_dir)
     for single_object in objects:
-        mask_prompt_list = glob.glob(os.path.join(directory,single_object,"**",'*.png'),recursive=True)
+        mask_prompt_list = glob.glob(os.path.join(directory,single_object,"**",'mask.png'),recursive=True)
         print(len(mask_prompt_list))
         anomalies=os.listdir(os.path.join(root_dir,single_object,"test"))
         anomalies.remove("good")
@@ -200,8 +200,10 @@ if __name__ == "__main__":
 
             cur_num = len(os.listdir(image_save_dir))
             for identifier in range(cur_num,500):
-                image_prompt=random.choice([os.path.join(good_path,x) for x in os.listdir(good_path)])
+                
                 mask_prompt=random.choice(mask_prompt_list)
+                # image_prompt=random.choice([os.path.join(good_path,x) for x in os.listdir(good_path)])
+                image_prompt=mask_prompt.replace("mask.png", "image.png")
 
                 x0 = None
                 mask = None

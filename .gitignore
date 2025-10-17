@@ -14,4 +14,5 @@ DualAnoDiff/dual-interrelated_diff/attn_maps/
 anogen/DIFFUSION/logs*/
 train_shells/
 anogen/DIFFUSION/models/
-anogen/DIFFUSION/visa_masks
+anogen/DIFFUSION/data_masks
+anogen/DIFFUSION/output_unmatched/

@@ -485,7 +485,7 @@ def parse_args(input_args=None):
 
     return args
 
-def pil_to_canny(pil_image, low_threshold=100, high_threshold=200):
+def pil_to_canny(pil_image, low_threshold=100, high_threshold=125):
     # 将 PIL 图像转换为 NumPy 数组（OpenCV 格式）
     numpy_image = np.array(pil_image)
 
@@ -637,7 +637,7 @@ class DreamBoothDataset(Dataset):
                 [
                     transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
                     transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=180,translate=(0.1, 0.1),fill=0),
+                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((size,size)),
@@ -648,7 +648,7 @@ class DreamBoothDataset(Dataset):
                 [
                     transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
                     transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=180,translate=(0.1, 0.1),fill=0),
+                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((size,size)),
@@ -660,7 +660,7 @@ class DreamBoothDataset(Dataset):
                 [
                     transforms.Resize((64,64),interpolation=transforms.InterpolationMode.BILINEAR),
                     transforms.Pad((64,64), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=180,translate=(0.1, 0.1),fill=0),
+                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
                     transforms.RandomHorizontalFlip(0.5),
                     transforms.RandomVerticalFlip(0.5),
                     transforms.CenterCrop((64,64)),
@@ -714,6 +714,7 @@ class DreamBoothDataset(Dataset):
         gt[gt>=0.5]=1
         # print(gt.sum())
         torch.random.manual_seed(seed)
+        # instance_image_blend.save("0.png")
         example["instance_image_blends"] = self.image_transforms(instance_image_blend)
         
         # save_image(example["instance_image_blends"], "1.png")
@@ -1371,7 +1372,7 @@ def main(args):
         if args.train_text_encoder:
             text_encoder.train()
         for step, batch in enumerate(train_dataloader):
-            
+            # import pdb;pdb.set_trace()
             # from torchvision import utils
             # utils.save_image((((batch["pixel_value_blends"][0]+1)/2)),"1.png")
             # model_input_blend = vae.encode(batch["pixel_value_blends"][0].unsqueeze(0)).latent_dist.sample()

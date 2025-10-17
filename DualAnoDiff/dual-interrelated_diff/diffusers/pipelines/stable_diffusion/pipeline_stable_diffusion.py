@@ -753,7 +753,7 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
                 ]
             )
         origin_image = img
-        def pil_to_canny(pil_image, low_threshold=100, high_threshold=200):
+        def pil_to_canny(pil_image, low_threshold=100, high_threshold=125):
             # 将 PIL 图像转换为 NumPy 数组（OpenCV 格式）
             numpy_image = np.array(pil_image)
 

@@ -42,11 +42,8 @@ def random_mask(template, info):
 
 
 if __name__ == '__main__':
-    json_path="./utils_scripts/visa_range.json"
     data_path = "/data1/gpt/jtj/asynthesis_data"
 
-    with open(json_path, "r") as file:
-        mask_info = json.load(file)
 
     classes = os.listdir(data_path)
     #遍历每一个类别
@@ -57,13 +54,14 @@ if __name__ == '__main__':
         #遍历每一张图像
         for i in range(min(len(files),1000)):
             path = files[i]
-            mask_path = os.path.join("visa_masks", c, "{:03d}".format(i))
+            mask_path = os.path.join("data_masks", c, "{:03d}".format(i))
             if not os.path.exists(mask_path):
                 os.makedirs(mask_path)
         
             print(path)
             img = cv2.imread(path)
             img = cv2.resize(img, (256, 256))
+            cv2.imwrite(os.path.join(mask_path, "image.png"), img)
 
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             ret, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -72,8 +70,8 @@ if __name__ == '__main__':
             kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (15, 15))
             closing = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
 
-            for j in range(2):
+            for j in range(1):
                 mask, n = random_mask(closing, [[0.05, 0.1], [0.05, 0.1], False])
                 print("generating {:03d}-{}: for {:03d} times".format(i, j, n))
-                save_path = os.path.join(mask_path, "{:03d}.png".format(j))
+                save_path = os.path.join(mask_path, "mask.png")
                 cv2.imwrite(save_path, mask)
