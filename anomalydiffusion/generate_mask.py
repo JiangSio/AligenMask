@@ -107,15 +107,18 @@ if __name__ == "__main__":
     model = load_model_from_config(config, actual_resume)
     sample_name=opt.sample_name
     anomaly_name=opt.anomaly_name
+    save_dir='generated_mask/%s/%s'%(sample_name,anomaly_name)
+    os.makedirs(save_dir,exist_ok=True)
+    cnt = len(os.listdir(save_dir))
+    if cnt>500:
+        exit()
     model.embedding_manager.load('logs/mask-checkpoints/%s-%s/checkpoints/embeddings.pt'%(sample_name,anomaly_name))
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)
     sampler = DDIMSampler(model)
-    cnt=0
     dataset = Personalized_mvtec_mask(opt.data_root, sample_name, anomaly_name,repeats=10000)
     dataloader = DataLoader(dataset, batch_size=8, shuffle=False, drop_last=True)
-    save_dir='generated_mask/%s/%s'%(sample_name,anomaly_name)
-    os.makedirs(save_dir,exist_ok=True)
+    
     with torch.no_grad():
         for i in range(1000):
             for idx, batch in enumerate(dataloader):
@@ -131,3 +134,5 @@ if __name__ == "__main__":
                         if flag:
                             save_image(mask,os.path.join(save_dir,'%d.jpg'%cnt))
                             cnt+=1
+                            if cnt>500:
+                                exit()

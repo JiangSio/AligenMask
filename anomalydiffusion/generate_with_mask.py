@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 import torchvision
 from torchvision import transforms
 from torchvision.utils import save_image
-from ldm.data.personalized import Positive_sample_with_generated_mask,Positive_sample_with_matching_mask,Positive_sample_with_matching_random_mask
+from ldm.data.personalized import Positive_sample_with_generated_mask,Positive_sample_with_matching_random_mask
 import random
 
 def setup_seed(seed):

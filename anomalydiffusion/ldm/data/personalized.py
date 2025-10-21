@@ -285,11 +285,15 @@ class Personalized_mvtec_mask(Dataset):
         self.mask_path=os.path.join(self.data_root,sample_name,'ground_truth',anomaly_name)
         img_files=os.listdir(self.img_path)
         mask_files=os.listdir(self.mask_path)
-        img_files.sort(key=lambda x:int(x[:3]))
-        mask_files.sort(key=lambda x: int(x[:3]))
+        img_files.sort()
+        mask_files.sort()
         
         self.img_files=[os.path.join(self.img_path,file_name) for file_name in img_files]
         self.mask_files=[os.path.join(self.mask_path,file_name) for file_name in mask_files]
+        l = len(img_files) // 3
+        self.img_files=self.img_files[:l]
+        self.mask_files=self.mask_files[:l]
+
         self.num_images = len(self.img_files)
         self._length = len(mask_files)
 
@@ -365,7 +369,7 @@ class Positive_sample_with_generated_mask(Dataset):
                  **kwargs
                  ):
         self.name=sample_name + '+' + anomaly_name
-        self.data_root = "/data4/jiangtianjia/datasets/mess_mvtec"
+        self.data_root = mvtec_path
         self.mask_root='./generated_mask'
         self.img_path=os.path.join(self.data_root,sample_name,'train','good')
         self.mask_path=os.path.join(self.mask_root,sample_name,anomaly_name)
@@ -449,249 +453,6 @@ class Positive_sample_with_generated_mask(Dataset):
         example["name"]=self.name
         return example
     
-
-class Positive_sample_with_matching_mask(Dataset):
-    #return the normal samples for sample_name with a randomly chosen mask.
-    def __init__(self,
-                 root_path,
-                 sample_name,
-                 anomaly_name,
-                 size=256,
-                 repeats=1,
-                 interpolation="bicubic",
-                 flip_p=0.5,
-                 set="train",
-                 placeholder_token="*",
-                 per_image_tokens=False,
-                 center_crop=False,
-                 mixing_prob=0.25,
-                 coarse_class_text=None,
-                 random_mask=False,
-                 **kwargs
-                 ):
-        self.name=sample_name + '+' + anomaly_name
-        self.data_root = root_path
-        self.data_root = "/data4/jiangtianjia/datasets/output1000"
-        self.output_path=os.path.join(self.data_root,sample_name,anomaly_name)
-        img_files=[x for x in os.listdir(self.output_path) if x.endswith("samples.jpg")]
-        mask_files=[x for x in os.listdir(self.output_path) if x.endswith("mask.jpg")]
-        img_files.sort()
-        mask_files.sort()
-        self.img_files=[os.path.join(self.output_path,file_name) for file_name in img_files]
-        self.mask_files=[os.path.join(self.output_path,file_name) for file_name in mask_files]
-        self.num_images = len(self.mask_files)
-        self._length = self.num_images
-
-        self.placeholder_token = placeholder_token
-
-        self.per_image_tokens = per_image_tokens
-        self.center_crop = center_crop
-        self.mixing_prob = mixing_prob
-
-        self.coarse_class_text = coarse_class_text
-
-        if per_image_tokens:
-            assert self.num_images < len(per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
-
-        if set == "train":
-            self._length = self.num_images * repeats
-        else:
-            self._length = 4
-
-        self.size = size
-        self.interpolation = {"linear": PIL.Image.BILINEAR,
-                              "bilinear": PIL.Image.BILINEAR,
-                              "bicubic": PIL.Image.BICUBIC,
-                              "lanczos": PIL.Image.LANCZOS,
-                              }[interpolation]
-        self.flip = transforms.RandomHorizontalFlip(p=flip_p)
-        self.random_mask=random_mask
-    def __len__(self):
-        return self._length
-
-    def __getitem__(self, i):
-        example = {}
-
-
-        placeholder_string = self.placeholder_token
-        if self.coarse_class_text:
-            placeholder_string = f"{self.coarse_class_text} {placeholder_string}"
-
-        if self.per_image_tokens and np.random.uniform() < self.mixing_prob:
-            text = random.choice(imagenet_dual_templates_small).format(placeholder_string, per_img_token_list[i % self.num_images])
-        else:
-            text = random.choice(imagenet_templates_small).format(placeholder_string)
-
-        example["caption"] = text
-        idx = i % self.num_images
-        source_filename = self.mask_files[idx]
-        target_filename = self.img_files[idx]
-        image = Image.open(target_filename)
-        mask = Image.open(source_filename).convert("L")
-        ###
-        draw = ImageDraw.Draw(mask)
-        coordinates = np.argwhere(np.array(mask) == 255)
-        mid_point = random.choice(coordinates)
-        
-        r = 20
-        x1,y1 = mid_point[1]+r, mid_point[0]+r
-        x0,y0 = mid_point[1]-r, mid_point[0]-r
-        
-        
-        
-        num_vertices = random.randint(3,8)
-        points = [(random.randint(x0, x1), random.randint(y0, y1)) for _ in range(num_vertices)]
-        draw.polygon(points, fill=255)
-        ###
-        if not image.mode == "RGB":
-            image = image.convert("RGB")
-        img = np.array(image).astype(np.uint8)
-        mas = np.array(mask).astype(np.float32)
-        image = Image.fromarray(img)
-        mask = Image.fromarray(mas)
-        if self.size is not None:
-            image = image.resize((self.size, self.size), resample=self.interpolation)
-            mask = mask.resize((self.size, self.size), resample=self.interpolation)
-            # mask = mask.resize((32, 32), resample=self.interpolation)
-        # image = self.flip(image)
-        # mask = self.flip(mask)
-        image = np.array(image).astype(np.uint8)
-        if self.random_mask:
-            mask=generate_mask(self.size).numpy().astype(np.float32)*255
-        else:
-            mask = np.array(mask).astype(np.float32)
-        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
-        mask = mask / 255.0
-        mask[mask < 0.5] = 0
-        mask[mask >= 0.5] = 1
-        example["mask"] = mask
-        example["name"]=self.name
-        return example
-
-class Positive_sample_with_ratio_matching_mask(Dataset):
-    #return the normal samples for sample_name with a randomly chosen mask.
-    def __init__(self,
-                 root_path,
-                 sample_name,
-                 anomaly_name,
-                 matching,
-                 size=256,
-                 repeats=1,
-                 interpolation="bicubic",
-                 flip_p=0.5,
-                 set="train",
-                 placeholder_token="*",
-                 per_image_tokens=False,
-                 center_crop=False,
-                 mixing_prob=0.25,
-                 coarse_class_text=None,
-                 random_mask=False,
-                 **kwargs
-                 ):
-        self.name=sample_name + '+' + anomaly_name
-        self.mvtec_root = "/data4/jiangtianjia/datasets/mess_mvtec"
-        self.generated_mask_root="./generated_mask"
-        self.matching = matching
-
-        self.good_path = os.path.join(self.mvtec_root,sample_name,"train","good")
-        self.good_files = [os.path.join(self.good_path,x) for x in os.listdir(self.good_path)]
-        self.generate_mask_path=os.path.join(self.generated_mask_root,sample_name,anomaly_name)
-        self.generated_mask_files=[os.path.join(self.generate_mask_path,x) for x in os.listdir(self.generate_mask_path)]
-        # import pdb;pdb.set_trace()
-
-        self.data_root = "/data4/jiangtianjia/datasets/output1000"
-        self.output_path=os.path.join(self.data_root,sample_name,anomaly_name)
-        img_files=[x for x in os.listdir(self.output_path) if x.endswith("samples.jpg")]
-        mask_files=[x for x in os.listdir(self.output_path) if x.endswith("mask.jpg")]
-        img_files.sort()
-        mask_files.sort()
-        self.img_files=[os.path.join(self.output_path,file_name) for file_name in img_files]
-        self.mask_files=[os.path.join(self.output_path,file_name) for file_name in mask_files]
-        self.num_images = len(self.mask_files)
-        self._length = self.num_images
-
-        self.placeholder_token = placeholder_token
-
-        self.per_image_tokens = per_image_tokens
-        self.center_crop = center_crop
-        self.mixing_prob = mixing_prob
-
-        self.coarse_class_text = coarse_class_text
-
-        if per_image_tokens:
-            assert self.num_images < len(per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
-
-        if set == "train":
-            self._length = self.num_images * repeats
-        else:
-            self._length = 4
-
-        self.size = size
-        self.interpolation = {"linear": PIL.Image.BILINEAR,
-                              "bilinear": PIL.Image.BILINEAR,
-                              "bicubic": PIL.Image.BICUBIC,
-                              "lanczos": PIL.Image.LANCZOS,
-                              }[interpolation]
-        self.flip = transforms.RandomHorizontalFlip(p=flip_p)
-        self.random_mask=random_mask
-    def __len__(self):
-        return self._length
-
-    def __getitem__(self, i):
-        example = {}
-
-
-        placeholder_string = self.placeholder_token
-        if self.coarse_class_text:
-            placeholder_string = f"{self.coarse_class_text} {placeholder_string}"
-
-        if self.per_image_tokens and np.random.uniform() < self.mixing_prob:
-            text = random.choice(imagenet_dual_templates_small).format(placeholder_string, per_img_token_list[i % self.num_images])
-        else:
-            text = random.choice(imagenet_templates_small).format(placeholder_string)
-
-        example["caption"] = text
-        idx = i % self.num_images
-
-        source_filename = None
-        target_filename = None
-        if self.matching:
-            source_filename = self.mask_files[idx]
-            target_filename = self.img_files[idx]
-            if random.random()<0.5:
-                source_filename = random.choice(self.generated_mask_files)
-        else:
-            source_filename = random.choice(self.generated_mask_files)
-            target_filename = random.choice(self.good_files)
-            if random.random()<0.5:
-                source_filename = random.choice(self.mask_files)
-
-        image = Image.open(target_filename)
-        mask = Image.open(source_filename).convert("L")
-        if not image.mode == "RGB":
-            image = image.convert("RGB")
-        img = np.array(image).astype(np.uint8)
-        mas = np.array(mask).astype(np.float32)
-        image = Image.fromarray(img)
-        mask = Image.fromarray(mas)
-        if self.size is not None:
-            image = image.resize((self.size, self.size), resample=self.interpolation)
-            mask = mask.resize((self.size, self.size), resample=self.interpolation)
-            # mask = mask.resize((32, 32), resample=self.interpolation)
-        # image = self.flip(image)
-        # mask = self.flip(mask)
-        image = np.array(image).astype(np.uint8)
-        if self.random_mask:
-            mask=generate_mask(self.size).numpy().astype(np.float32)*255
-        else:
-            mask = np.array(mask).astype(np.float32)
-        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
-        mask = mask / 255.0
-        mask[mask < 0.5] = 0
-        mask[mask >= 0.5] = 1
-        example["mask"] = mask
-        example["name"]=self.name
-        return example
 
 class Positive_sample_with_matching_random_mask(Dataset):
     #return the normal samples for sample_name with a randomly chosen mask.

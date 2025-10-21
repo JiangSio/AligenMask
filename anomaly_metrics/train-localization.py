@@ -205,7 +205,7 @@ if __name__=="__main__":
         "batch_size": args.bs,
     }
     run = swanlab.init(
-        project="aligen",
+        project=args.name,
         description="",
         config=swanlab_config,
         # mode='disabled',
