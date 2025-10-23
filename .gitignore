@@ -15,4 +15,7 @@ anogen/DIFFUSION/logs*/
 train_shells/
 anogen/DIFFUSION/models/
 anogen/DIFFUSION/data_masks
-anogen/DIFFUSION/output_unmatched/
+anogen/DIFFUSION/output*/
+fast-foreground-aware-anomaly-synthesis/logs
+fast-foreground-aware-anomaly-synthesis/models
+fast-foreground-aware-anomaly-synthesis/samples

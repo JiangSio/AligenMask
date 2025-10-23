@@ -174,7 +174,7 @@ if __name__ == "__main__":
         sampler = PLMSSampler(model)
     else:
         sampler = DDIMSampler(model)
-    directory="./data_masks"
+    directory="../../DualAnoDiff/dual-interrelated_diff/generate_data"
     root_dir="/data1/gpt/jtj/asynthesis_data"
     
     # image_prompt = opt.image_prompt
@@ -183,15 +183,14 @@ if __name__ == "__main__":
     
     objects=os.listdir(root_dir)
     for single_object in objects:
-        mask_prompt_list = glob.glob(os.path.join(directory,single_object,"**",'mask.png'),recursive=True)
-        print(len(mask_prompt_list))
-        image_prompt_list = glob.glob(os.path.join(directory,single_object,"**",'image.png'),recursive=True)
-
+        
         anomalies=os.listdir(os.path.join(root_dir,single_object,"test"))
         anomalies.remove("good")
         for anomaly in anomalies:
-            image_save_dir=f"output_unmatched2/{single_object}/{anomaly}/image"
-            mask_save_dir=f"output_unmatched2/{single_object}/{anomaly}/mask"
+            mask_prompt_list = glob.glob(os.path.join(directory,single_object,anomaly,'fg','*.png'),recursive=True)
+            print(len(mask_prompt_list))
+            image_save_dir=f"output_matched/{single_object}/{anomaly}/image"
+            mask_save_dir=f"output_matched/{single_object}/{anomaly}/mask"
             os.makedirs(image_save_dir, exist_ok=True)
             os.makedirs(mask_save_dir, exist_ok=True)
             good_path=os.path.join(root_dir,single_object,"train","good")
@@ -205,8 +204,7 @@ if __name__ == "__main__":
                 
                 mask_prompt=random.choice(mask_prompt_list)
                 # image_prompt=random.choice([os.path.join(good_path,x) for x in os.listdir(good_path)])
-                #image_prompt=mask_prompt.replace("mask.png", "image.png")
-                image_prompt=random.choice(image_prompt_list)
+                image_prompt=mask_prompt.replace("fg", "origin")
 
                 x0 = None
                 mask = None

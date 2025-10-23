@@ -102,9 +102,6 @@ if __name__ == "__main__":
     )
 
     opt = parser.parse_args()
-    config = OmegaConf.load("configs/latent-diffusion/txt2img-1p4B-finetune.yaml")
-    actual_resume = './models/ldm/text2img-large/model.ckpt'
-    model = load_model_from_config(config, actual_resume)
     sample_name=opt.sample_name
     anomaly_name=opt.anomaly_name
     save_dir='generated_mask/%s/%s'%(sample_name,anomaly_name)
@@ -112,6 +109,9 @@ if __name__ == "__main__":
     cnt = len(os.listdir(save_dir))
     if cnt>500:
         exit()
+    config = OmegaConf.load("configs/latent-diffusion/txt2img-1p4B-finetune.yaml")
+    actual_resume = './models/ldm/text2img-large/model.ckpt'
+    model = load_model_from_config(config, actual_resume)
     model.embedding_manager.load('logs/mask-checkpoints/%s-%s/checkpoints/embeddings.pt'%(sample_name,anomaly_name))
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)
