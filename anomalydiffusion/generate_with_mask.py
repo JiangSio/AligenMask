@@ -113,27 +113,8 @@ if __name__ == "__main__":
 
     # setup_seed(42)
     opt = parser.parse_args()
-    config = OmegaConf.load("configs/latent-diffusion/txt2img-1p4B-finetune-encoder+embedding.yaml")
-    actual_resume = './models/ldm/text2img-large/model.ckpt'
-    model = load_model_from_config(config, actual_resume)
     sample_name=opt.sample_name
     anomaly_name=opt.anomaly_name
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    model = model.to(device)
-    sampler = DDIMSampler(model)
-    model.prepare_spatial_encoder(optimze_together=True)
-    ckpt = torch.load('logs/anomaly-checkpoints/checkpoints/spatial_encoder.pt')
-    model.embedding_manager.spatial_encoder_model.load_state_dict(ckpt)
-    model.embedding_manager.load('logs/anomaly-checkpoints/checkpoints/embeddings.pt')
-    dataset = ""
-    if opt.matching:
-        dataset = Positive_sample_with_matching_random_mask(opt.data_root,sample_name, anomaly_name, repeats=1, size=256, set='train',
-                                                      per_image_tokens=False)
-    else:
-        dataset = Positive_sample_with_generated_mask(opt.data_root,sample_name, anomaly_name, repeats=1, size=256, set='train',
-                                                        per_image_tokens=False)
-    
-    dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
     save_dir = 'generated_dataset/%s/%s' % (sample_name, anomaly_name)
     if opt.matching:
         save_dir = 'generated_matched_dataset/%s/%s' % (sample_name, anomaly_name)
@@ -144,6 +125,29 @@ if __name__ == "__main__":
     os.makedirs(os.path.join(save_dir, 'ori'), exist_ok=True)
     os.makedirs(os.path.join(save_dir, 'recon'), exist_ok=True)
     cnt=len(os.listdir(os.path.join(save_dir,'image')))
+    if cnt>=500:
+        print('already generated %s %s'%(sample_name,anomaly_name))
+        exit()
+    print('starting generating %s %s from %s'%(sample_name,anomaly_name,cnt))
+    config = OmegaConf.load("configs/latent-diffusion/txt2img-1p4B-finetune-encoder+embedding.yaml")
+    actual_resume = './models/ldm/text2img-large/model.ckpt'
+    model = load_model_from_config(config, actual_resume)
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    model = model.to(device)
+    sampler = DDIMSampler(model)
+    model.prepare_spatial_encoder(optimze_together=True)
+    ckpt = torch.load('./logs/anomaly-checkpoints/checkpoints/spatial_encoder.pt')
+    model.embedding_manager.spatial_encoder_model.load_state_dict(ckpt)
+    model.embedding_manager.load('./logs/anomaly-checkpoints/checkpoints/embeddings.pt')
+    dataset = ""
+    if opt.matching:
+        dataset = Positive_sample_with_matching_random_mask(opt.data_root,sample_name, anomaly_name, repeats=1, size=256, set='train',
+                                                      per_image_tokens=False)
+    else:
+        dataset = Positive_sample_with_generated_mask(opt.data_root,sample_name, anomaly_name, repeats=1, size=256, set='train',
+                                                        per_image_tokens=False)
+    
+    dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
     with torch.no_grad():
         for epoch in range(500):
             for idx, batch in enumerate(dataloader):

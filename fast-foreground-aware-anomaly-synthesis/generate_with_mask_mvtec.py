@@ -139,8 +139,10 @@ if __name__ == "__main__":
     os.makedirs(os.path.join(save_dir, 'mask'), exist_ok=True)
     os.makedirs(os.path.join(save_dir, 'image-mask-ori'), exist_ok=True)
     cnt=len(os.listdir(os.path.join(save_dir, 'image')))
-    if cnt>500:
+    if cnt>=500:
+        print('already generated %s %s'%(sample_name,anomaly_name))
         exit()
+    print('starting generating %s %s from %s'%(sample_name,anomaly_name,cnt))
 
     config = OmegaConf.load("configs/latent-diffusion/txt2img-1p4B-finetune-encoder-mvtec.yaml")
     config.model.params.personalization_config.params.initializer_words[0] = opt.init_word
@@ -170,7 +172,7 @@ if __name__ == "__main__":
     # unconditional_only=False
     with torch.no_grad():
         for idx, batch in enumerate(dataloader):
-            if cnt>500:
+            if cnt>=500:
                 exit()
             with model.ema_scope():
                 mask=batch['mask'].cpu()
@@ -190,7 +192,7 @@ if __name__ == "__main__":
                     save_image(torch.stack([(imgs[i]+1)/2,mask[i].repeat(3,1,1),(ori_images[i] + 1) / 2],dim=0), os.path.join(save_dir, 'image-mask-ori', '%d.png' % cnt))
                     
                     cnt+=1
-                    if cnt>500:
+                    if cnt>=500:
                         exit()
 
 
