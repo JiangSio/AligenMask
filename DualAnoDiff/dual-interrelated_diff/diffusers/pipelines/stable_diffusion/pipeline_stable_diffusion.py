@@ -41,6 +41,8 @@ from ..pipeline_utils import DiffusionPipeline
 from . import StableDiffusionPipelineOutput
 from .safety_checker import StableDiffusionSafetyChecker
 
+from pil2canny.pil2canny import pil_to_canny,pil_to_edge
+
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -740,10 +742,9 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         img_path = os.path.join(data_dir,f"{class_id}/train/good")
         files = os.listdir(img_path)
         
-        file_path = os.path.join(img_path,random.choices(files)[0])
-        print(f"choose {file_path}")
-        
-        img = Image.open(file_path).convert("RGB")
+        good_files_sample = random.sample(files, batch_size)
+        file_paths = [os.path.join(img_path,file) for file in good_files_sample]
+
         trans = transforms.Compose(
                 [
                     transforms.Resize((512,512), interpolation=transforms.InterpolationMode.BILINEAR),
@@ -752,39 +753,38 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
                     transforms.Normalize([0.5], [0.5]),
                 ]
             )
-        origin_image = img
-        def pil_to_canny(pil_image, low_threshold=100, high_threshold=125):
-            # 将 PIL 图像转换为 NumPy 数组（OpenCV 格式）
-            numpy_image = np.array(pil_image)
+        origin_images = []
+        img_list = []
+        for file_path in file_paths:
+            img = Image.open(file_path).convert("RGB")
+            origin_images.append(img)
+            img = pil_to_edge(img).convert("RGB")
+            # img = pil_to_canny(img).convert("RGB")
 
-            # 转换 RGB 为 BGR（OpenCV 默认格式）
-            if numpy_image.ndim == 3:  # 彩色图像
-                opencv_image = cv2.cvtColor(numpy_image, cv2.COLOR_RGB2BGR)
-                # 转换为灰度图
-                gray_image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2GRAY)
-            else:  # 灰度图像
-                gray_image = numpy_image
+            img = trans(img)
+            img_list.append(img)
 
-            # 应用 Canny 边缘检测
-            edges = cv2.Canny(gray_image, low_threshold, high_threshold)
+            print(f"choose {file_path}")
 
-            # 将边缘检测结果转换回 PIL 图像
-            return Image.fromarray(edges)
-        img = pil_to_canny(img).convert("RGB")
-        img = trans(img)
+        img = torch.stack(img_list)
+        img = img.to(device)
+        img_latents = self.vae.encode(img).latent_dist.sample()
+        img_latents = self.vae.config.scaling_factor * img_latents
+        
+
+        ''' red latent injection
         lambda_param = 10.0
         decreasing_sample = torch.distributions.Exponential(lambda_param).sample(img.shape)
         decreasing_sample = torch.clamp(decreasing_sample, 0, 1)
         decreasing_sample = torch.tensor(decreasing_sample>0.8,dtype=torch.float32)
 
         img = img #* (1-decreasing_sample)+ torch.tensor([1,-1,-1]).unsqueeze(-1).unsqueeze(-1).repeat(1,512,512) * decreasing_sample
-        
+        '''
         # import pdb; pdb.set_trace()
-        img = img.to(device)
+        
         noise = latents
 
-        img_latents = self.vae.encode(img.unsqueeze(0)).latent_dist.sample()
-        img_latents = self.vae.config.scaling_factor * img_latents
+        
 
         # method 1
         starter_time = 40 / num_inference_steps
@@ -987,9 +987,6 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         # method 2
         # pass
 
-        
-
-
         if not output_type == "latent":
             image = self.vae.decode(latents / self.vae.config.scaling_factor, return_dict=False)[0]
             image, has_nsfw_concept = self.run_safety_checker(image, device, prompt_embeds.dtype)
@@ -1005,7 +1002,7 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         image = self.image_processor.postprocess(image, output_type=output_type, do_denormalize=do_denormalize)
         
         
-        ori_image = origin_image
+        ori_images = origin_images
         
         # Offload last model to CPU
         if hasattr(self, "final_offload_hook") and self.final_offload_hook is not None:
@@ -1014,7 +1011,7 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         if not return_dict:
             return (image, has_nsfw_concept)
 
-        return StableDiffusionPipelineOutput(images=image, nsfw_content_detected=has_nsfw_concept),ori_image
+        return StableDiffusionPipelineOutput(images=image, nsfw_content_detected=has_nsfw_concept),ori_images
 
 
 class StableDiffusionPipeline_bg(DiffusionPipeline, TextualInversionLoaderMixin, LoraLoaderMixin, FromSingleFileMixin):
