@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 import torchvision
 from torchvision import transforms
 from torchvision.utils import save_image
-from ldm.data.personalized import Mvtec_generation_dataset
+from ldm.data.personalized import Mvtec_generation_dataset,Mvtec_generation_matching_dataset
 import random
 
 def setup_seed(seed):
@@ -129,11 +129,17 @@ if __name__ == "__main__":
         help='whether use adaptive attention reweighting',
     )
 
+    parser.add_argument(
+        "--matching",
+        action='store_true',
+    )
+
     # setup_seed(4444)
     opt = parser.parse_args()
     sample_name=opt.sample_name
     anomaly_name=opt.anomaly_name
     save_dir = os.path.join(sample_name, anomaly_name)
+    # import pdb;pdb.set_trace()
     os.makedirs(save_dir,exist_ok=True)
     os.makedirs(os.path.join(save_dir,'image'), exist_ok=True)
     os.makedirs(os.path.join(save_dir, 'mask'), exist_ok=True)
@@ -164,36 +170,42 @@ if __name__ == "__main__":
     model.FARM.load_state_dict(FARM.state_dict(),strict = True)
     
     model.eval()
-    dataset = Mvtec_generation_dataset(opt.data_root,opt.mask_path,sample_name, anomaly_name, repeats=1, size=256, set='train',
-                                                      per_image_tokens=False)
+    dataset = None
+    if opt.matching:
+        dataset = Mvtec_generation_matching_dataset(opt.data_root,opt.mask_path,sample_name, anomaly_name, repeats=1, size=256, set='train')
+    else:
+        dataset = Mvtec_generation_dataset(opt.data_root,opt.mask_path,sample_name, anomaly_name, repeats=1, size=256, set='train')
+
     dataloader = DataLoader(dataset, batch_size=8, shuffle=False, drop_last=True)
     print(len(dataloader))
     
     # unconditional_only=False
     with torch.no_grad():
-        for idx, batch in enumerate(dataloader):
-            if cnt>=500:
-                exit()
-            with model.ema_scope():
-                mask=batch['mask'].cpu()
-                ori_images=batch['image'].permute(0,3,1,2)
-                images=model.log_images(batch,sample=False,inpaint=True,unconditional_only=False,adaptive_mask=opt.adaptive_mask)
-                imgs=images['samples_inpainting'].cpu()
-                recon_image=images['reconstruction']
-                for i in range(len(imgs)):
-                    save_image((imgs[i] + 1) / 2, os.path.join(save_dir, 'image', '%d.png' % cnt), normalize=False)
+        for _ in range(500):
 
-                    # save_image((ori_images[i] + 1) / 2, os.path.join(save_dir, 'ori', '%d.jpg' % cnt),
-                    #             normalize=False)
-                    # save_image((recon_image[i]+1) / 2, os.path.join(save_dir, 'recon', '%d.jpg' % cnt),
-                    #             normalize=False)
-                    save_image(mask[i], os.path.join(save_dir, 'mask','%d.png' % cnt))
-                    # save_image(torch.stack([(imgs[i]+1)/2,mask[i].repeat(3,1,1)],dim=0), os.path.join(save_dir, 'image-mask', '%d.jpg' % cnt))
-                    save_image(torch.stack([(imgs[i]+1)/2,mask[i].repeat(3,1,1),(ori_images[i] + 1) / 2],dim=0), os.path.join(save_dir, 'image-mask-ori', '%d.png' % cnt))
-                    
-                    cnt+=1
-                    if cnt>=500:
-                        exit()
+            for idx, batch in enumerate(dataloader):
+                if cnt>=500:
+                    exit()
+                with model.ema_scope():
+                    mask=batch['mask'].cpu()
+                    ori_images=batch['image'].permute(0,3,1,2)
+                    images=model.log_images(batch,sample=False,inpaint=True,unconditional_only=False,adaptive_mask=opt.adaptive_mask)
+                    imgs=images['samples_inpainting'].cpu()
+                    recon_image=images['reconstruction']
+                    for i in range(len(imgs)):
+                        save_image((imgs[i] + 1) / 2, os.path.join(save_dir, 'image', '%d.png' % cnt), normalize=False)
+
+                        # save_image((ori_images[i] + 1) / 2, os.path.join(save_dir, 'ori', '%d.jpg' % cnt),
+                        #             normalize=False)
+                        # save_image((recon_image[i]+1) / 2, os.path.join(save_dir, 'recon', '%d.jpg' % cnt),
+                        #             normalize=False)
+                        save_image(mask[i], os.path.join(save_dir, 'mask','%d.png' % cnt))
+                        # save_image(torch.stack([(imgs[i]+1)/2,mask[i].repeat(3,1,1)],dim=0), os.path.join(save_dir, 'image-mask', '%d.jpg' % cnt))
+                        save_image(torch.stack([(imgs[i]+1)/2,mask[i].repeat(3,1,1),(ori_images[i] + 1) / 2],dim=0), os.path.join(save_dir, 'image-mask-ori', '%d.png' % cnt))
+                        
+                        cnt+=1
+                        if cnt>=500:
+                            exit()
 
 
 #python generate_with_mask.py --sample_name=screw --anomaly_name=thread_side --adaptive_mask

@@ -18,4 +18,4 @@ anogen/DIFFUSION/data_masks
 anogen/DIFFUSION/output*/
 fast-foreground-aware-anomaly-synthesis/logs
 fast-foreground-aware-anomaly-synthesis/models
-fast-foreground-aware-anomaly-synthesis/samples
+fast-foreground-aware-anomaly-synthesis/samples*

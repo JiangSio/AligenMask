@@ -462,7 +462,7 @@ class MvtecDataset_singel_anomaly_validation (Personalized_mvtec_encoder):
         mask_files.sort()
         l = len(mask_files) // 3
         mask_files = mask_files[0:l]
-
+        
 
         for idx in range(len(mask_files)):
             mask_filename = mask_files[idx]
@@ -476,11 +476,9 @@ class MvtecDataset_singel_anomaly_validation (Personalized_mvtec_encoder):
             broken = parts[-2]
             # 用 + 连接
             anomaly_name = object1 + '+' + broken
-
-            # 这里重新修改img的路径
-            parts[-2] = "good"
-            # 重新拼接路径
-            img_filename = os.sep.join(parts)
+            good_img_path = os.path.dirname(self.data_root).replace("ground_truth", "train").replace(broken,"good")
+            img_filename = random.choice([os.path.join(good_img_path,i) for i in os.listdir(good_img_path)])
+            
 
             if not os.path.exists(img_filename):
                 print("jjjjjjjjjjjjjjjjj")
@@ -573,12 +571,10 @@ class Mvtec_generation_dataset (Personalized_mvtec_encoder):
                  mixing_prob=0.25,
                  coarse_class_text=None,
                  random_mask=False,
-                 **kwargs
+                 set="train",
                  ):
         
        
-
-        self.data=[]
         self.size = size
         self.interpolation = {"linear": Image.BILINEAR,
                               "bilinear": Image.BILINEAR,
@@ -590,7 +586,7 @@ class Mvtec_generation_dataset (Personalized_mvtec_encoder):
         self.mask_path= mask_path
         self.img_path=self.data_root
 
-
+        # import pdb;pdb.set_trace()
         img_files = get_files(self.img_path)
         mask_files = get_files(self.mask_path)
         mask_files.sort()
@@ -601,7 +597,7 @@ class Mvtec_generation_dataset (Personalized_mvtec_encoder):
         self.img_files = img_files
         self.mask_files = mask_files
 
-        self.num_images = len(self.data)
+        self.num_images = len(img_files)
         self._length = self.num_images
 
         self.placeholder_token = placeholder_token
@@ -623,7 +619,7 @@ class Mvtec_generation_dataset (Personalized_mvtec_encoder):
 
 
     def __len__(self):
-        return 500
+        return self._length
 
     def __getitem__(self, idx):
         # idx=idx%self.num_images
@@ -666,6 +662,114 @@ class Mvtec_generation_dataset (Personalized_mvtec_encoder):
         mask[mask >= 0.5] = 1
 
 
+        example["caption"] = text
+        example["image"] = image
+        example["mask"] = mask
+        example["name"]= anomaly_name
+    
+        return example
+
+class Mvtec_generation_matching_dataset (Personalized_mvtec_encoder):
+    def __init__(self,
+                 mvtec_path,
+                 mask_path,
+                 sample_name,
+                 anomaly_name,
+                 size=256,
+                 repeats=1,
+                 interpolation="bicubic",
+                 flip_p=0.5,
+                 placeholder_token="*",
+                 per_image_tokens=False,
+                 center_crop=False,
+                 mixing_prob=0.25,
+                 coarse_class_text=None,
+                 random_mask=False,
+                 set="train",
+                 ):
+        
+        self.size = size
+        self.interpolation = {"linear": Image.BILINEAR,
+                              "bilinear": Image.BILINEAR,
+                              "bicubic": Image.BICUBIC,
+                              "lanczos": Image.LANCZOS,
+                              }[interpolation]
+
+        self.data_root = mvtec_path
+        self.mask_path= mask_path
+        self.img_path=self.data_root
+
+
+        img_files = get_files(self.img_path)
+        mask_files = get_files(self.mask_path)
+        img_files.sort()
+        mask_files.sort()
+        
+        self.img_files = img_files
+        self.mask_files = mask_files
+
+        self.num_images = len(img_files)
+        self._length = self.num_images
+
+        self.placeholder_token = placeholder_token
+
+        self.per_image_tokens = per_image_tokens
+        self.center_crop = center_crop
+        self.mixing_prob = mixing_prob
+
+        self.coarse_class_text = coarse_class_text
+
+        if per_image_tokens:
+            assert self.num_images < len(per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
+
+        if set == "train":
+            self._length = self.num_images * repeats
+        else:
+            self._length = 4
+        self.random_mask=random_mask
+
+    def __len__(self):
+        return self._length
+
+    def __getitem__(self, idx):
+        idx=idx%self.num_images
+        example = {}
+        placeholder_string = self.placeholder_token
+        if self.coarse_class_text:
+            placeholder_string = f"{self.coarse_class_text} {placeholder_string}"
+
+        text = random.choice(imagenet_templates_smallest).format(placeholder_string)
+        img_filename = self.img_files[idx]
+        mask_filename = self.mask_files[idx]
+
+        
+        parts = mask_filename.split(os.sep)
+        # 获取所需的部分
+        object1 = parts[-4]  # 'bottle'
+        broken = parts[-3]
+        # 用 + 连接
+        anomaly_name = object1 + '+' + broken
+    
+        image = Image.open(img_filename)
+        mask = Image.open(mask_filename).convert("L")
+        if not image.mode == "RGB":
+            image = image.convert("RGB")
+
+        image = np.array(image).astype(np.uint8)
+        mask = np.array(mask).astype(np.float32)
+
+        image = Image.fromarray(image)
+        mask = Image.fromarray(mask)
+        # # 为了确保图像正确，resize到256x256
+        size = 256
+        image = image.resize((size, size), resample=self.interpolation)
+        mask = mask.resize((size, size), resample=self.interpolation)
+        image = np.array(image).astype(np.float32)
+        mask = np.array(mask).astype(np.float32)
+        image= (image / 127.5 - 1.0).astype(np.float32)
+        mask = mask / 255.0
+        mask[mask < 0.5] = 0
+        mask[mask >= 0.5] = 1
         example["caption"] = text
         example["image"] = image
         example["mask"] = mask
