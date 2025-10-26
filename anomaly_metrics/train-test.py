@@ -5,9 +5,9 @@ bash_segment_template='''
 CUDA_VISIBLE_DEVICES={id} python train-localization.py --generated_data_path={generated_data_path}  --mvtec_path={mvtec_path} --suffix={suffix} --name={name} --epochs=100 --clss_name={clss_name} --bs={bs} --lr={lr}
 '''
 mvtec_path = "/data1/gpt/jtj/asynthesis_data"
-cuda_id = 2
-generated_data_path = "/data1/gpt/jtj/AligenMask/anogen/DIFFUSION/output_unmatched2"
-name = "anogen2"
+cuda_id = 5
+generated_data_path = "/data1/gpt/jtj/AligenMask/fast-foreground-aware-anomaly-synthesis/samples-matching"
+name = "FAST+aligen"
 suffix = "png"
 # ########
 
@@ -34,7 +34,7 @@ name_list = [
 	"tubes", 
     ]
 
-bash_file_path = "run1.sh"
+bash_file_path = "run2.sh"
 if os.path.exists(bash_file_path):
     os.remove(bash_file_path)
 

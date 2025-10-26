@@ -19,3 +19,4 @@ anogen/DIFFUSION/output*/
 fast-foreground-aware-anomaly-synthesis/logs
 fast-foreground-aware-anomaly-synthesis/models
 fast-foreground-aware-anomaly-synthesis/samples*
+anomaly_gen_metrics/tmp*
