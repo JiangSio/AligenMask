@@ -154,14 +154,14 @@ if __name__ == "__main__":
                 # print(len(list1))
             
             list2 = glob.glob(os.path.join(generate_path, clss_name,"*","image", "*"))  # 生成图片
-            list2 = random.sample(list2, 1000)
+            list2 = random.sample(list2, min(1000,len(list2)))
             # import pdb;pdb.set_trace()
             print(f"start compute ic-lpips of {generate_path}")
             res = compute_clpips_from_list(list1, list2)
             results.loc[results["class"] == clss_name, method] = round(res,4)
 
             list2 = glob.glob(os.path.join(generate_matching_path, clss_name,"*","image", "*"))  # 生成图片
-            list2 = random.sample(list2, 1000)
+            list2 = random.sample(list2, min(1000,len(list2)))
 
             print(f"start compute ic-lpips of {generate_matching_path}")
             res = compute_clpips_from_list(list1, list2)
@@ -170,7 +170,6 @@ if __name__ == "__main__":
             results.to_csv(save_path, index=False, encoding="utf-8")
     
 
-    
 
 
 
