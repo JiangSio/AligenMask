@@ -6,8 +6,8 @@ CUDA_VISIBLE_DEVICES={id} python train-localization.py --generated_data_path={ge
 '''
 mvtec_path = "/data1/gpt/jtj/asynthesis_data"
 cuda_id = 5
-generated_data_path = "/data1/gpt/jtj/AligenMask/fast-foreground-aware-anomaly-synthesis/samples-matching"
-name = "FAST+aligen"
+generated_data_path = "/data1/gpt/jtj/AligenMask/anogen/DIFFUSION/output_matched"
+name = "Anogen+aligenEdge"
 suffix = "png"
 # ########
 
@@ -34,7 +34,7 @@ name_list = [
 	"tubes", 
     ]
 
-bash_file_path = "run2.sh"
+bash_file_path = "run.sh"
 if os.path.exists(bash_file_path):
     os.remove(bash_file_path)
 

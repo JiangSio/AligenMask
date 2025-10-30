@@ -1,7 +1,7 @@
 import os
 
 root_dir = "/data1/gpt/jtj/asynthesis_data"
-matching_img_mask_dir = "/data1/gpt/jtj/AligenMask/DualAnoDiff/dual-interrelated_diff/generate_data-60%"
+matching_img_mask_dir = "/data1/gpt/jtj/AligenMask/DualAnoDiff/dual-interrelated_diff/generate_data"
 save_file = "generate_matching.sh"
 cuda_id = "5"
 

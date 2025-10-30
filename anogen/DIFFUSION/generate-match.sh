@@ -1,1 +1,1 @@
-CUDA_VISIBLE_DEVICES=2 python generate-match.py
+CUDA_VISIBLE_DEVICES=6 python generate-match.py

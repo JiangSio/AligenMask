@@ -47,6 +47,7 @@ if __name__ == "__main__":
     save_path = "results/fid.csv"
     
     data_root = {
+        "anomalydiffusion": ["/data1/gpt/jtj/AligenMask/anomalydiffusion/generated_dataset","/data1/gpt/jtj/AligenMask/anomalydiffusion/generated_matched_dataset"],
         "anogen": ["/data1/gpt/jtj/AligenMask/anogen/DIFFUSION/output_unmatched2","/data1/gpt/jtj/AligenMask/anogen/DIFFUSION/output_matched"],
         "FAST": ["/data1/gpt/jtj/AligenMask/fast-foreground-aware-anomaly-synthesis/samples","/data1/gpt/jtj/AligenMask/fast-foreground-aware-anomaly-synthesis/samples-matching"]
     }

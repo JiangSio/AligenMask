@@ -645,6 +645,20 @@ class Mvtec_generation_dataset (Personalized_mvtec_encoder):
         if not image.mode == "RGB":
             image = image.convert("RGB")
 
+        def random_rotate_mask(mask):
+            angle = random.uniform(-180, 180)
+            
+            # 使用最近邻插值进行旋转（保持分割掩码的原始值）
+            rotated_mask = mask.rotate(
+                angle, 
+                resample=Image.NEAREST,  # 防止插值导致像素值变化
+                expand=False,            # 保持原始图像尺寸
+                fillcolor=0              # 填充背景为黑色（0值）
+            )
+            
+            return rotated_mask
+        mask = random_rotate_mask(mask)
+
         image = np.array(image).astype(np.uint8)
         mask = np.array(mask).astype(np.float32)
 

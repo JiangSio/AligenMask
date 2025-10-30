@@ -45,6 +45,11 @@ def compute_clpips(real_images,generate_images,resolution = 256,):
         # and form the cluster using the realimages as the center.
         for file_path in generate_images:
             img = Image.open(file_path).convert("RGB").resize((256,256))
+            mask = Image.open(file_path.replace("image", "mask")).convert("L").resize((256,256))
+            mask_np = np.array(mask)
+            mask_np = mask_np > 0
+            if mask_np.sum() >= 256*256*0.025:
+                continue
             img = transform(img).unsqueeze(0)
             score_list = loss_fn_alex(img.repeat(data_list.shape[0], 1, 1, 1).to(device), data_list)
 
@@ -89,26 +94,6 @@ def compute_clpips_from_list(real_images, generate_images, resolution = 256):
     """
     This function computes the IC-LPIPS score for given generated images.
     """
-    # tmp_real_dir = "tmp_icl_real"
-    # tmp_gen_dir = "tmp_icl_gen"
-    # if os.path.exists(tmp_real_dir):
-    #     os.system("rm -rf " + tmp_real_dir)
-    # if os.path.exists(tmp_gen_dir):
-    #     os.system("rm -rf " + tmp_gen_dir)
-    # os.mkdir(tmp_real_dir)
-    # os.mkdir(tmp_gen_dir)
-    # for i,real_image in enumerate(real_images):
-    #     img = Image.open(real_image).convert("RGB").resize((256,256))
-    #     # mask = Image.open(real_image.replace("test","ground_truth")).convert("L").resize((256,256))
-    #     # black_bg = Image.new("RGB", img.size, (0, 0, 0))
-    #     # img = Image.composite(img, black_bg, mask)
-    #     img.convert("RGB").save(os.path.join(tmp_real_dir, f"{i}.png"))
-    # for i,generate_image in enumerate(generate_images):
-    #     img = Image.open(generate_image).convert("RGB").resize((256,256))
-    #     # mask = Image.open(generate_image.replace("image","mask")).convert("L").resize((256,256))
-    #     # black_bg = Image.new("RGB", img.size, (0, 0, 0))
-    #     # img = Image.composite(img, black_bg, mask)
-    #     img.convert("RGB").save(os.path.join(tmp_gen_dir, f"{i}.png"))
     
     clpips, clpips_rz = compute_clpips(real_images, generate_images)
     return clpips_rz
@@ -118,8 +103,9 @@ if __name__ == "__main__":
     save_path = "results/ic-lpips.csv"
     
     data_root = {
-        "anogen": ["/data1/gpt/jtj/AligenMask/anogen/DIFFUSION/output_unmatched2","/data1/gpt/jtj/AligenMask/anogen/DIFFUSION/output_matched"],
-        "FAST": ["/data1/gpt/jtj/AligenMask/fast-foreground-aware-anomaly-synthesis/samples","/data1/gpt/jtj/AligenMask/fast-foreground-aware-anomaly-synthesis/samples-matching"]
+        "anomalydiffusion": ["/data1/gpt/jtj/AligenMask/anomalydiffusion/generated_dataset","/data1/gpt/jtj/AligenMask/anomalydiffusion/generated_matched_dataset_canny"],
+        "anogen": ["/data1/gpt/jtj/AligenMask/anogen/DIFFUSION/output_unmatched2","/data1/gpt/jtj/AligenMask/anogen/DIFFUSION/output_matched_canny"],
+        "FAST": ["/data1/gpt/jtj/AligenMask/fast-foreground-aware-anomaly-synthesis/samples-strict","/data1/gpt/jtj/AligenMask/fast-foreground-aware-anomaly-synthesis/samples-matching0"]
     }
 
     colums = ["class"]

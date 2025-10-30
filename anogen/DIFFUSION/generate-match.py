@@ -182,10 +182,12 @@ if __name__ == "__main__":
     
     
     objects=os.listdir(root_dir)
+    objects.sort()
     for single_object in objects:
         
         anomalies=os.listdir(os.path.join(root_dir,single_object,"test"))
         anomalies.remove("good")
+        anomalies.sort()
         for anomaly in anomalies:
             mask_prompt_list = glob.glob(os.path.join(directory,single_object,anomaly,'fg','*.png'),recursive=True)
             print(len(mask_prompt_list))

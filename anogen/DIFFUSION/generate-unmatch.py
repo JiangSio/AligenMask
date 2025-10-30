@@ -182,6 +182,7 @@ if __name__ == "__main__":
     
     
     objects=os.listdir(root_dir)
+    objects.sort()
     for single_object in objects:
         mask_prompt_list = glob.glob(os.path.join(directory,single_object,"**",'mask.png'),recursive=True)
         print(len(mask_prompt_list))
@@ -189,6 +190,7 @@ if __name__ == "__main__":
 
         anomalies=os.listdir(os.path.join(root_dir,single_object,"test"))
         anomalies.remove("good")
+        anomalies.sort()
         for anomaly in anomalies:
             image_save_dir=f"output_unmatched2/{single_object}/{anomaly}/image"
             mask_save_dir=f"output_unmatched2/{single_object}/{anomaly}/mask"
