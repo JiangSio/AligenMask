@@ -111,29 +111,29 @@ for name in name_list:
         
         for anomaly in anomalies:
             bash_script = bash_script_template.format(name=name, anomaly=anomaly, id=cuda_id, dualanodiff_path=dualanodiff_path, mvtec_path=mvtec_path)
-            # file.write(bash_script)
-            # file.write('\n')
+            file.write(bash_script)
+            file.write('\n')
             
             # 生成数据：
             bash_script = bash_generate_data_template.format(name=name,id=cuda_id,anomaly=anomaly, dualanodiff_path=dualanodiff_path, mvtec_path=mvtec_path)
-            # file.write(bash_script)
-            # file.write('\n')
+            file.write(bash_script)
+            file.write('\n')
 
             # 生成mask
             bash_script = bash_generate_mask_template.format(name=name, anomaly=anomaly, id=cuda_id, dualanodiff_path=dualanodiff_path)
-            # file.write(bash_script)
-            # file.write('\n')
+            file.write(bash_script)
+            file.write('\n')
 
             #生成异常图像
             bash_script = bash_anomaly_generate_template.format(id=cuda_id, name=name, anomaly=anomaly, anomalydiffusion_path=anomalydiffusion_path, dualanodiff_path=dualanodiff_path)
-            file.write(bash_script)
-            file.write('\n')
+            # file.write(bash_script)
+            # file.write('\n')
         
         #测试
         
         bash_script = bash_segment_template.format(id=cuda_id, mvtec_path=mvtec_path, anomalydiffusion_path=anomalydiffusion_path, name=name, testmodel_path=testmodel_path,bs=16,lr=0.0001)
-        file.write(bash_script)
-        file.write('\n')
+        # file.write(bash_script)
+        # file.write('\n')
     
 
         

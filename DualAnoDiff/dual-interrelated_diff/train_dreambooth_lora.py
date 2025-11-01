@@ -546,6 +546,13 @@ class DreamBoothDataset(Dataset):
         else:
             self.class_data_root = None
 
+        fixed_0 = transforms.Lambda(lambda x: transforms.functional.rotate(x, 0, fill=0))
+        fixed_90 = transforms.Lambda(lambda x: transforms.functional.rotate(x, 90, fill=0))
+        fixed_180 = transforms.Lambda(lambda x: transforms.functional.rotate(x, 180, fill=0))
+        fixed_270 = transforms.Lambda(lambda x: transforms.functional.rotate(x, 270, fill=0))
+        self.rotate_transforms = [fixed_0, fixed_90, fixed_180, fixed_270]
+        self.rotate_rand = 0
+
         if mvtec_name in ['transistor']:
             self.image_transforms = transforms.Compose(
                 [
@@ -581,72 +588,24 @@ class DreamBoothDataset(Dataset):
                     transforms.ToTensor(),
                 ]
             )
-        elif mvtec_name in ['screw_single']:
-            self.image_transforms = transforms.Compose(
-                [
-                    transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
-                    transforms.RandomHorizontalFlip(0.5),
-                    transforms.RandomVerticalFlip(0.5),
-                    transforms.CenterCrop((size,size)),
-                    transforms.ToTensor(),
-                ]
-            )
-            self.image_transforms_mask = transforms.Compose(
-                [
-                    transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
-                    transforms.RandomHorizontalFlip(0.5),
-                    transforms.RandomVerticalFlip(0.5),
-                    transforms.CenterCrop((size,size)),
-                    transforms.ToTensor(),
-                ]
-            )
-            
-            self.image_transforms_gt = transforms.Compose(
-                [
-                    transforms.Resize((64,64),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((64,64), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
-                    transforms.RandomHorizontalFlip(0.5),
-                    transforms.RandomVerticalFlip(0.5),
-                    transforms.CenterCrop((64,64)),
-                    transforms.ToTensor(),
-                ]
-            )
         else:
-            self.image_transforms = transforms.Compose(
+            self.image_transforms1 = transforms.Compose(
                 [
                     transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
-                    transforms.RandomHorizontalFlip(0.5),
-                    transforms.RandomVerticalFlip(0.5),
-                    transforms.CenterCrop((size,size)),
-                    transforms.ToTensor(),
-                ]
-            )
-            self.image_transforms_mask = transforms.Compose(
-                [
-                    transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
-                    transforms.RandomHorizontalFlip(0.5),
-                    transforms.RandomVerticalFlip(0.5),
-                    transforms.CenterCrop((size,size)),
+                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),])
+                    
+            self.image_transforms2 = transforms.Compose(
+                [   transforms.CenterCrop((size,size)),
                     transforms.ToTensor(),
                 ]
             )
             
-            self.image_transforms_gt = transforms.Compose(
+            self.image_transforms_gt1 = transforms.Compose(
                 [
                     transforms.Resize((64,64),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((64,64), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=180,translate=(0, 0),fill=0),
-                    transforms.RandomHorizontalFlip(0.5),
-                    transforms.RandomVerticalFlip(0.5),
+                    transforms.Pad((64,64), fill=0, padding_mode='symmetric'),])
+            self.image_transforms_gt2 = transforms.Compose(
+                [        
                     transforms.CenterCrop((64,64)),
                     transforms.ToTensor(),
                 ]
@@ -670,43 +629,39 @@ class DreamBoothDataset(Dataset):
         if not mask.mode == "L":
             mask = mask.convert("L")
         instance_image_blend = pil_to_edge(instance_image_blend).convert("RGB")
-        # instance_image_blend.save("1.png")
-        # mask.save("2.png")
-        # transform imgs
-        seed = torch.random.seed()
+        
+        
+        # seed = torch.random.seed()
+        self.rotate_rand = torch.randint(0,4, (1,))
 
         ori_mask = mask.copy()
 
-        retry_times = 0
-        max_retry_times = 20
-        while retry_times<max_retry_times:
-            torch.random.manual_seed(seed)
-            mask = self.image_transforms_mask(ori_mask)
-            mask[mask<0.5]=0
-            mask[mask>=0.5]=1
+        mask = self.image_transforms1(ori_mask)
+        mask = self.rotate_transforms[self.rotate_rand](mask)
+        mask = self.image_transforms2(mask)
+        mask[mask<0.5]=0
+        mask[mask>=0.5]=1
             
-            if mask.sum().item()>0:
-                break
-            seed = torch.random.seed()
-            retry_times += 1
-        if retry_times>=max_retry_times:
-            assert False, "no mask in instance image"
-            
-        torch.random.manual_seed(seed)
-        gt = self.image_transforms_gt(ori_mask)
+        # torch.random.manual_seed(seed)
+        gt = self.image_transforms_gt1(ori_mask)
+        gt = self.rotate_transforms[self.rotate_rand](gt)
+        gt = self.image_transforms_gt2(gt)
         gt[gt<0.5]=0
         gt[gt>=0.5]=1
         # print(gt.sum())
-        torch.random.manual_seed(seed)
-        # instance_image_blend.save("0.png")
-        example["instance_image_blends"] = self.image_transforms(instance_image_blend)
+        # torch.random.manual_seed(seed)
+        instance_image_blend.save("0.png")
+        image = self.image_transforms1(instance_image_blend)
+        image = self.rotate_transforms[self.rotate_rand](image)
+        image = self.image_transforms2(image)
+        example["instance_image_blends"] = image
         
-        # save_image(example["instance_image_blends"], "1.png")
-        # save_image(mask, "2.png")
+        save_image(example["instance_image_blends"], "1.png")
+        save_image(mask, "2.png")
         # save_image(gt, "3.png")
         
         example["instance_image_blends"] = example["instance_image_blends"]*(1-mask) + mask * torch.tensor([1,0,0]).unsqueeze(1).unsqueeze(1).repeat(1,512,512)
-        # save_image(example["instance_image_blends"], "4.png")
+        save_image(example["instance_image_blends"], "4.png")
         example["instance_image_blends"] = self.transform_normalize(example["instance_image_blends"])
         # save_image(example["instance_image_blends"], "5.png")
         
@@ -1439,7 +1394,6 @@ def main(args):
                     assert(False)
 
                 # Get the target for loss depending on the prediction type
-                # import ipdb;ipdb.set_trace()
                 if noise_scheduler.config.prediction_type == "epsilon":
                     target = noise
                 elif noise_scheduler.config.prediction_type == "v_prediction":

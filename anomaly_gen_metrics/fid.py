@@ -47,12 +47,12 @@ if __name__ == "__main__":
     save_path = "results/fid.csv"
     
     data_root = {
-        "anomalydiffusion": ["/data1/gpt/jtj/AligenMask/anomalydiffusion/generated_dataset","/data1/gpt/jtj/AligenMask/anomalydiffusion/generated_matched_dataset"],
+        "anodif": ["/data1/gpt/jtj/AligenMask/anomalydiffusion/generated_dataset","/data1/gpt/jtj/AligenMask/anomalydiffusion/generated_matched_dataset"],
         "anogen": ["/data1/gpt/jtj/AligenMask/anogen/DIFFUSION/output_unmatched2","/data1/gpt/jtj/AligenMask/anogen/DIFFUSION/output_matched"],
         "FAST": ["/data1/gpt/jtj/AligenMask/fast-foreground-aware-anomaly-synthesis/samples","/data1/gpt/jtj/AligenMask/fast-foreground-aware-anomaly-synthesis/samples-matching"]
     }
 
-    colums = ["class"]
+    colums = ["category"]
     for x in data_root.keys():
         colums.extend([x, x+"+aligen"])
     results = pd.DataFrame(columns=colums)
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             list2 = random.sample(list2, length)
 
             res = calculate_fid(list1, list2)
-            results.loc[results["class"] == clss_name, method] = round(res,4)
+            results.loc[results["category"] == clss_name, method] = round(res,4)
 
             list2 = glob.glob(os.path.join(generate_matching_path, clss_name,"*","image", "*"))
             length = min(len(list1), len(list2))
@@ -96,7 +96,7 @@ if __name__ == "__main__":
             list2 = random.sample(list2, length)
 
             res = calculate_fid(list1, list2)
-            results.loc[results["class"] == clss_name, method+"+aligen"] = round(res,4)
+            results.loc[results["category"] == clss_name, method+"+aligen"] = round(res,4)
 
             results.to_csv(save_path, index=False, encoding="utf-8")
 

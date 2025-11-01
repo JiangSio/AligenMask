@@ -787,7 +787,7 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         
 
         # method 1
-        starter_time = 40 / num_inference_steps
+        starter_time = random.uniform(0.15, 0.4)
         starter_idx = int(starter_time* len(timesteps))
         # method 2
         # pass
@@ -807,13 +807,13 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         # import pdb;pdb.set_trace()
         
         # method 1
-        hook_attribute={
-            "max_resolution": 512,
-            "to_q_cache": None,"to_k_cache": None,
-            "to_q_lora_cache": None,"to_k_lora_cache": None,
-            "record_num": 0,"attention_map": None,
-        }
-        hook_handles = []
+        # hook_attribute={
+        #     "max_resolution": 512,
+        #     "to_q_cache": None,"to_k_cache": None,
+        #     "to_q_lora_cache": None,"to_k_lora_cache": None,
+        #     "record_num": 0,"attention_map": None,
+        # }
+        # hook_handles = []
 
         # method 2
         # hook_attribute={
@@ -834,40 +834,40 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             # import pdb;pdb.set_trace()
             for i, t in enumerate(timesteps):
-                if t == timesteps[0]:
+                # if t == timesteps[0]:
 
-                    # method 1
+                #     # method 1
 
-                    def hook_fn(module, input, output):
+                #     def hook_fn(module, input, output):
                         
-                        if hook_attribute["record_num"] % 4 == 0:
-                            hook_attribute["to_q_cache"] = output
-                            hook_attribute["record_num"] += 1
-                        elif hook_attribute["record_num"] % 4 == 1:
-                            hook_attribute["to_q_lora_cache"] = output
-                            hook_attribute["record_num"] += 1
-                        elif hook_attribute["record_num"] % 4 == 2:
-                            hook_attribute["to_k_cache"] = output
-                            hook_attribute["record_num"] += 1
-                        else:
-                            hook_attribute["to_k_lora_cache"] = output
-                            hook_attribute["record_num"] += 1
-                            d_k = output.shape[-1]
-                            attn_map = torch.einsum("b h d, b s d -> b h s", hook_attribute["to_q_cache"]+hook_attribute["to_q_lora_cache"], hook_attribute["to_k_cache"]+hook_attribute["to_k_lora_cache"]) / (d_k ** 0.5)
-                            attn_map = torch.softmax(attn_map, dim=1)
+                #         if hook_attribute["record_num"] % 4 == 0:
+                #             hook_attribute["to_q_cache"] = output
+                #             hook_attribute["record_num"] += 1
+                #         elif hook_attribute["record_num"] % 4 == 1:
+                #             hook_attribute["to_q_lora_cache"] = output
+                #             hook_attribute["record_num"] += 1
+                #         elif hook_attribute["record_num"] % 4 == 2:
+                #             hook_attribute["to_k_cache"] = output
+                #             hook_attribute["record_num"] += 1
+                #         else:
+                #             hook_attribute["to_k_lora_cache"] = output
+                #             hook_attribute["record_num"] += 1
+                #             d_k = output.shape[-1]
+                #             attn_map = torch.einsum("b h d, b s d -> b h s", hook_attribute["to_q_cache"]+hook_attribute["to_q_lora_cache"], hook_attribute["to_k_cache"]+hook_attribute["to_k_lora_cache"]) / (d_k ** 0.5)
+                #             attn_map = torch.softmax(attn_map, dim=1)
                             
-                            pixel_len = attn_map.shape[1]
-                            attn_map = einops.rearrange(attn_map, "b (x y) s -> b s x y" ,x = int(pixel_len ** 0.5), y= int(pixel_len ** 0.5))
-                            attn_map = torch.nn.functional.interpolate(attn_map, size=(hook_attribute["max_resolution"], hook_attribute["max_resolution"]), mode="bilinear")
-                            if hook_attribute["attention_map"] is None:
-                                hook_attribute["attention_map"] = attn_map
-                            else:
-                                hook_attribute["attention_map"] += attn_map
+                #             pixel_len = attn_map.shape[1]
+                #             attn_map = einops.rearrange(attn_map, "b (x y) s -> b s x y" ,x = int(pixel_len ** 0.5), y= int(pixel_len ** 0.5))
+                #             attn_map = torch.nn.functional.interpolate(attn_map, size=(hook_attribute["max_resolution"], hook_attribute["max_resolution"]), mode="bilinear")
+                #             if hook_attribute["attention_map"] is None:
+                #                 hook_attribute["attention_map"] = attn_map
+                #             else:
+                #                 hook_attribute["attention_map"] += attn_map
 
-                    for name, module in self.unet.named_modules():
-                        if "attn2" in name and (name.endswith("to_q") or name.endswith("to_k") or name.endswith("to_q_lora") or name.endswith("to_k_lora")):  # 在SD中，attn2通常代表Cross-Attention（attn1是Self-Attention）
-                            handle = module.register_forward_hook(hook_fn)
-                            hook_handles.append(handle)
+                #     for name, module in self.unet.named_modules():
+                #         if "attn2" in name and (name.endswith("to_q") or name.endswith("to_k") or name.endswith("to_q_lora") or name.endswith("to_k_lora")):  # 在SD中，attn2通常代表Cross-Attention（attn1是Self-Attention）
+                #             handle = module.register_forward_hook(hook_fn)
+                #             hook_handles.append(handle)
 
                     # method 2
                     # def hook_fn(module, input, output):
@@ -891,9 +891,9 @@ class StableDiffusionPipeline(DiffusionPipeline, TextualInversionLoaderMixin, Lo
                     #         hook_handles.append(handle)
 
                 #method 1 & 2
-                if t == timesteps[-1]:
-                    for hook in hook_handles:
-                        hook.remove()
+                # if t == timesteps[-1]:
+                #     for hook in hook_handles:
+                #         hook.remove()
 
                 #method1
                 
