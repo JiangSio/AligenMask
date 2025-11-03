@@ -650,18 +650,18 @@ class DreamBoothDataset(Dataset):
         gt[gt>=0.5]=1
         # print(gt.sum())
         # torch.random.manual_seed(seed)
-        instance_image_blend.save("0.png")
+        # instance_image_blend.save("0.png")
         image = self.image_transforms1(instance_image_blend)
         image = self.rotate_transforms[self.rotate_rand](image)
         image = self.image_transforms2(image)
         example["instance_image_blends"] = image
         
-        save_image(example["instance_image_blends"], "1.png")
-        save_image(mask, "2.png")
+        # save_image(example["instance_image_blends"], "1.png")
+        # save_image(mask, "2.png")
         # save_image(gt, "3.png")
         
         example["instance_image_blends"] = example["instance_image_blends"]*(1-mask) + mask * torch.tensor([1,0,0]).unsqueeze(1).unsqueeze(1).repeat(1,512,512)
-        save_image(example["instance_image_blends"], "4.png")
+        # save_image(example["instance_image_blends"], "4.png")
         example["instance_image_blends"] = self.transform_normalize(example["instance_image_blends"])
         # save_image(example["instance_image_blends"], "5.png")
         
