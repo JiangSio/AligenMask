@@ -202,6 +202,8 @@ if __name__ == "__main__":
             model.embedding_manager.load(opt.embedding_path)
 
             cur_num = len(os.listdir(image_save_dir))
+            if cur_num==500:
+                print(f"{single_object}/{anomaly} done")
             for identifier in range(cur_num,500):
                 
                 mask_prompt=random.choice(mask_prompt_list)

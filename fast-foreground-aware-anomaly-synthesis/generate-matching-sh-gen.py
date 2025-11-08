@@ -3,7 +3,7 @@ import os
 root_dir = "/data1/gpt/jtj/asynthesis_data"
 matching_img_mask_dir = "/data1/gpt/jtj/AligenMask/DualAnoDiff/dual-interrelated_diff/generate_data"
 save_file = "generate_matching.sh"
-cuda_id = "5"
+cuda_id = "4"
 
 if os.path.exists(save_file):
     os.remove(save_file)
