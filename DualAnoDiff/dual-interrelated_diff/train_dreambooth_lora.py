@@ -553,63 +553,27 @@ class DreamBoothDataset(Dataset):
         self.rotate_transforms = [fixed_0, fixed_90, fixed_180, fixed_270]
         self.rotate_rand = 0
 
-        if mvtec_name in ['transistor']:
-            self.image_transforms = transforms.Compose(
-                [
-                    transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=0,translate=(0.1, 0.1),fill=0),
-                    transforms.RandomHorizontalFlip(0.5),
-                    transforms.RandomVerticalFlip(0.5),
-                    transforms.CenterCrop((size,size)),
-                    transforms.ToTensor(),
-                ]
-            )
-            self.image_transforms_mask = transforms.Compose(
-                [
-                    transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=0,translate=(0.1, 0.1),fill=0),
-                    transforms.RandomHorizontalFlip(0.5),
-                    transforms.RandomVerticalFlip(0.5),
-                    transforms.CenterCrop((size,size)),
-                    transforms.ToTensor(),
-                ]
-            )
-            
-            self.image_transforms_gt = transforms.Compose(
-                [
-                    transforms.Resize((64,64),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((64,64), fill=0, padding_mode='symmetric'),
-                    transforms.RandomAffine(degrees=0,translate=(0.1, 0.1),fill=0),
-                    transforms.RandomHorizontalFlip(0.5),
-                    transforms.RandomVerticalFlip(0.5),
-                    transforms.CenterCrop((64,64)),
-                    transforms.ToTensor(),
-                ]
-            )
-        else:
-            self.image_transforms1 = transforms.Compose(
-                [
-                    transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((size,size), fill=0, padding_mode='symmetric'),])
-                    
-            self.image_transforms2 = transforms.Compose(
-                [   transforms.CenterCrop((size,size)),
-                    transforms.ToTensor(),
-                ]
-            )
-            
-            self.image_transforms_gt1 = transforms.Compose(
-                [
-                    transforms.Resize((64,64),interpolation=transforms.InterpolationMode.BILINEAR),
-                    transforms.Pad((64,64), fill=0, padding_mode='symmetric'),])
-            self.image_transforms_gt2 = transforms.Compose(
-                [        
-                    transforms.CenterCrop((64,64)),
-                    transforms.ToTensor(),
-                ]
-            )
+        self.image_transforms1 = transforms.Compose(
+        [
+            transforms.Resize((size,size),interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.Pad((size,size), fill=0, padding_mode='symmetric'),])
+                
+        self.image_transforms2 = transforms.Compose(
+            [   transforms.CenterCrop((size,size)),
+                transforms.ToTensor(),
+            ]
+        )
+        
+        self.image_transforms_gt1 = transforms.Compose(
+            [
+                transforms.Resize((64,64),interpolation=transforms.InterpolationMode.BILINEAR),
+                transforms.Pad((64,64), fill=0, padding_mode='symmetric'),])
+        self.image_transforms_gt2 = transforms.Compose(
+            [        
+                transforms.CenterCrop((64,64)),
+                transforms.ToTensor(),
+            ]
+        )
         self.transform_normalize = transforms.Normalize([0.5], [0.5])
 
     def __len__(self):
@@ -633,7 +597,9 @@ class DreamBoothDataset(Dataset):
         
         # seed = torch.random.seed()
         self.rotate_rand = torch.randint(0,4, (1,))
-
+        if self.mvtec_name == 'transistor':
+            self.rotate_rand = 0
+            
         ori_mask = mask.copy()
 
         mask = self.image_transforms1(ori_mask)

@@ -1,11 +1,11 @@
 import subprocess
 import os
 
-mvtec_path = '/data1/gpt/jtj/asynthesis_data'
-dualanodiff_path = '/data1/gpt/jtj/AligenMask/DualAnoDiff/dual-interrelated_diff'
-anomalydiffusion_path = '/data1/gpt/jtj/AligenMask/anomalydiffusion'
-testmodel_path = "/data1/gpt/jtj/AligenMask/anomaly_metrics"
-cuda_id = 7
+mvtec_path = '/data1/jiangtianjia/datasets/mvtec+visa'
+dualanodiff_path = '/data1/jiangtianjia/AligenMask/DualAnoDiff/dual-interrelated_diff'
+anomalydiffusion_path = '/data1/jiangtianjia/AligenMask/anomalydiffusion'
+testmodel_path = "/data1/jiangtianjia/AligenMask/anomaly_metrics"
+cuda_id = 0
 # 定义要执行的Bash脚本模板
 bash_script_template = '''
 
@@ -25,8 +25,8 @@ CUDA_VISIBLE_DEVICES={id} accelerate launch \
     --output_dir=$OUTPUT_DIR \
     --instance_prompt="a photo of hazelnut" \
     --resolution=512 \
-    --train_batch_size=2 \
-    --gradient_accumulation_steps=2 \
+    --train_batch_size=1 \
+    --gradient_accumulation_steps=4 \
     --learning_rate=5e-5 \
     --lr_scheduler="constant" \
     --lr_warmup_steps=0 \
@@ -72,13 +72,18 @@ CUDA_VISIBLE_DEVICES={id} python train-localization.py --generated_data_path={an
 name_list = [
     "bottle", 
 	"cable", 
+	"candle", 
 	"capsule", 
 	"capsules", 
+	"carpet", 
 	"cashew", 
 	"chewinggum", 
 	"fryum", 
+	"grid", 
 	"hazelnut", 
-	"macaroni", 
+	"leather", 
+	"macaroni1", 
+	"macaroni2", 
 	"metal_nut", 
 	"pcb1", 
 	"pcb2", 
@@ -87,9 +92,11 @@ name_list = [
 	"pill", 
 	"pipe_fryum", 
 	"screw", 
-	"screw_single", 
+	"tile", 
 	"toothbrush", 
-	"tubes", 
+	"transistor", 
+	"wood", 
+	"zipper", 
     ]
 
 bash_file_path = "train_shells/"+"run2.sh"
@@ -111,32 +118,32 @@ for name in name_list:
         
         for anomaly in anomalies:
             bash_script = bash_script_template.format(name=name, anomaly=anomaly, id=cuda_id, dualanodiff_path=dualanodiff_path, mvtec_path=mvtec_path)
-            # if not os.path.exists(os.path.join(dualanodiff_path,'generate_data',name,anomaly,"checkpoint-2000")):
-            #     file.write(bash_script)
-            #     file.write('\n')
-            # else:
-            #     print("{} {} already finish training".format(name,anomaly))
+            if not os.path.exists(os.path.join(dualanodiff_path,'generate_data',name,anomaly,"checkpoint-2000")):
+                file.write(bash_script)
+                file.write('\n')
+            else:
+                print("{} {} already finish training".format(name,anomaly))
             
             # 生成数据：
             bash_script = bash_generate_data_template.format(name=name,id=cuda_id,anomaly=anomaly, dualanodiff_path=dualanodiff_path, mvtec_path=mvtec_path)
-            # file.write(bash_script)
-            # file.write('\n')
+            file.write(bash_script)
+            file.write('\n')
 
             # 生成mask
             bash_script = bash_generate_mask_template.format(name=name, anomaly=anomaly, id=cuda_id, dualanodiff_path=dualanodiff_path)
-            # file.write(bash_script)
-            # file.write('\n')
+            file.write(bash_script)
+            file.write('\n')
 
             #生成异常图像
             bash_script = bash_anomaly_generate_template.format(id=cuda_id, name=name, anomaly=anomaly, anomalydiffusion_path=anomalydiffusion_path, dualanodiff_path=dualanodiff_path)
-            file.write(bash_script)
-            file.write('\n')
+            # file.write(bash_script)
+            # file.write('\n')
         
         #测试
         
         bash_script = bash_segment_template.format(id=cuda_id, mvtec_path=mvtec_path, anomalydiffusion_path=anomalydiffusion_path, name=name, testmodel_path=testmodel_path,bs=16,lr=0.0001)
-        file.write(bash_script)
-        file.write('\n')
+        # file.write(bash_script)
+        # file.write('\n')
     
 
         

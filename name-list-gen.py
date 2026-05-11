@@ -1,6 +1,6 @@
 import os
 
-root_dir = "/data1/gpt/jtj/asynthesis_data"
+root_dir = "/data1/jiangtianjia/datasets/mvtec+visa"
 save_file = "name-list.txt"
 if os.path.exists(save_file):
     os.remove(save_file)
