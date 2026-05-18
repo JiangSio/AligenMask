@@ -1,10 +1,10 @@
 import subprocess
 import os
 
-mvtec_path = '/data1/jiangtianjia/datasets/mvtec+visa'
-dualanodiff_path = '/data1/jiangtianjia/AligenMask/DualAnoDiff/dual-interrelated_diff'
-anomalydiffusion_path = '/data1/jiangtianjia/AligenMask/anomalydiffusion'
-testmodel_path = "/data1/jiangtianjia/AligenMask/anomaly_metrics"
+mvtec_path = '/data1/gpt/jtj/supp_exp/mvtec+visa'
+dualanodiff_path = '/data1/gpt/jtj/supp_exp/AligenMask/DualAnoDiff/dual-interrelated_diff'
+anomalydiffusion_path = '/data1/gpt/jtj/supp_exp/AligenMask/anomalydiffusion'
+testmodel_path = "/data1/gpt/jtj/supp_exp/AligenMask/anomaly_metrics"
 cuda_id = 0
 # 定义要执行的Bash脚本模板
 bash_script_template = '''
@@ -25,8 +25,8 @@ CUDA_VISIBLE_DEVICES={id} accelerate launch \
     --output_dir=$OUTPUT_DIR \
     --instance_prompt="a photo of hazelnut" \
     --resolution=512 \
-    --train_batch_size=1 \
-    --gradient_accumulation_steps=4 \
+    --train_batch_size=2 \
+    --gradient_accumulation_steps=2 \
     --learning_rate=5e-5 \
     --lr_scheduler="constant" \
     --lr_warmup_steps=0 \

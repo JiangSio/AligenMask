@@ -1,5 +1,5 @@
-path_to_mvtec_dataset="/data1/gpt/jtj/asynthesis_data"
-CUDA_VISIBLE_DEVICES=7 python main.py --spatial_encoder_embedding --data_enhance \
+path_to_mvtec_dataset="/data1/gpt/jtj/supp_exp/mvtec+visa"
+CUDA_VISIBLE_DEVICES=5 python main.py --spatial_encoder_embedding --data_enhance \
  --base configs/latent-diffusion/txt2img-1p4B-finetune-encoder+embedding.yaml -t \
  --actual_resume models/ldm/text2img-large/model.ckpt -n test --gpus 0, \
  --init_word anomaly  --mvtec_path=$path_to_mvtec_dataset
