@@ -123,8 +123,12 @@ def train_on_device(obj_names, args):
 
     if not os.path.exists(args.log_path):
         os.makedirs(args.log_path)
-    with open(os.path.join(args.log_path,f"{args.name}.txt"),'a') as wf:
-            wf.write('class,AUC Image,AUC Pixel,AP Pixel,PRO Pixel\n')
+    with open(os.path.join(args.log_path,f"{args.name}_max.csv"),'a') as wf:
+        if wf.tell()==0:
+            wf.write('class,AUC Image,AP Image,AUC Pixel,AP Pixel,PRO Pixel\n')
+    with open(os.path.join(args.log_path,f"{args.name}_avg.csv"),'a') as wf:
+        if wf.tell()==0:
+            wf.write('class,AUC Image,AP Image,AUC Pixel,AP Pixel,PRO Pixel\n')
     for obj_name in obj_names:
         model_seg = DiscriminativeSubNetwork(in_channels=3, out_channels=2)
         model_seg.cuda()
@@ -137,10 +141,13 @@ def train_on_device(obj_names, args):
 
         loss_focal = FocalLoss()
 
-        dataset = MVTec_Anomaly_Detection(args,obj_name,suffix=args.suffix)
+        dataset = MVTec_Anomaly_Detection(args,obj_name)
         dataloader = DataLoader(dataset, batch_size=args.bs,shuffle=True, num_workers=16)
-        auroc_is, auroc_pxs,ap_pxs,pro_pxs=[],[],[],[]
+        
         max_auroc_is, max_ap_is,max_auroc_pxs,max_ap_pxs,max_pro_pxs = 0,0,0,0,0
+        max_overall_score = 0
+        max_overall_score_list = []
+
         for epoch in range(args.epochs):
             model_seg.train()
             
@@ -163,21 +170,31 @@ def train_on_device(obj_names, args):
             #     auroc_pxs.append(auroc_px)
             #     ap_pxs.append(ap_px)
             #     pro_pxs.append(pro_px)
-            if max_auroc_pxs < auroc_px:
-                max_auroc_is, max_ap_is,max_auroc_pxs,max_ap_pxs,max_pro_pxs=auroc,ap,auroc_px,ap_px,pro_px
+            max_auroc_is = max(auroc,max_auroc_is)
+            max_ap_is = max(ap,max_ap_is)
+            max_auroc_pxs = max(auroc_px,max_auroc_pxs)
+            max_ap_pxs = max(ap_px,max_ap_pxs)
+            max_pro_pxs = max(pro_px,max_pro_pxs)
+            overall_score = (auroc+ap+auroc_px+ap_px)
+            if overall_score>max_overall_score:
+                max_overall_score = overall_score
+                max_overall_score_list = [auroc,ap,auroc_px,ap_px,pro_px]
+
+            
             # if sum_metric>last_sum:
             #     last_sum=sum_metric
             # os.makedirs(os.path.join(args.save_path,args.setting),exist_ok=True)
             # torch.save(model_seg.state_dict(), os.path.join(args.save_path,args.setting, run_name + ".pckl"))
-        with open(os.path.join(args.log_path,f"{args.name}.txt"),'a') as wf:
-            wf.write(f'{obj_name},{max_auroc_is},{max_ap_is},{max_auroc_pxs},{max_ap_pxs},{max_pro_pxs}\n')
+        with open(os.path.join(args.log_path,f"{args.name}_max.csv"),'a') as wf:
+            wf.write(f'{obj_name},{max_auroc_is*100:.2f},{max_ap_is*100:.2f},{max_auroc_pxs*100:.2f},{max_ap_pxs*100:.2f},{max_pro_pxs*100:.2f}\n')
+        with open(os.path.join(args.log_path,f"{args.name}_avg.csv"),'a') as wf:
+            wf.write(f'{obj_name},{max_overall_score_list[0]*100:.2f},{max_overall_score_list[1]*100:.2f},{max_overall_score_list[2]*100:.2f},{max_overall_score_list[3]*100:.2f},{max_overall_score_list[4]*100:.2f}\n')
 
 if __name__=="__main__":
     import argparse
     set_seed(42)
     parser = argparse.ArgumentParser()
     parser.add_argument('--name', type=str, default='all')
-    parser.add_argument('--suffix', type=str, default='jpg')
     parser.add_argument('--clss_name', type=str, required=True)
     parser.add_argument('--generated_data_path', action='store', type=str, required=True)
     parser.add_argument('--save_path', default='checkpoints/localization', type=str)
@@ -208,7 +225,7 @@ if __name__=="__main__":
         project=args.name,
         description="",
         config=swanlab_config,
-        # mode='disabled',
+        mode='disabled',
     )
 
     with torch.cuda.device(args.gpu_id):

@@ -77,7 +77,7 @@ class MVTecDRAEMTestDataset_partial(Dataset):
         return sample
 
 class MVTec_Anomaly_Detection(Dataset):
-    def __init__(self, args,sample_name,suffix):
+    def __init__(self, args,sample_name):
         self.gooddata=[]
         self.anomalydata=[]
         self.good_path='%s/%s/train/good'%(args.mvtec_path,sample_name)
@@ -86,7 +86,7 @@ class MVTec_Anomaly_Detection(Dataset):
         self.root_dir = '%s/%s'%(args.generated_data_path,sample_name)
         self.anomaly_names=os.listdir(self.root_dir)
         
-        self.img_paths=glob(os.path.join(self.root_dir,f'*/image/*.{suffix}'))
+        self.img_paths=glob(os.path.join(self.root_dir,f'*/image/*'))
 
         for impath in self.img_paths:
             anomaly = os.path.split(impath.replace(f'/image/{os.path.basename(impath)}',''))[1]

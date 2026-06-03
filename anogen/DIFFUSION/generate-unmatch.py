@@ -175,7 +175,7 @@ if __name__ == "__main__":
     else:
         sampler = DDIMSampler(model)
     directory="./data_masks"
-    root_dir="/data1/gpt/jtj/asynthesis_data"
+    root_dir="/data1/gpt/jtj/supp_exp/mvtec+visa"
     
     # image_prompt = opt.image_prompt
     # mask_prompt = opt.mask_prompt

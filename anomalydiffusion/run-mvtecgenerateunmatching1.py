@@ -4,37 +4,44 @@ parser=argparse.ArgumentParser()
 parser.add_argument(
         "--data_path",
         type=str,
-        default="/data1/gpt/jtj/asynthesis_data",
+        default="/data1/gpt/jtj/supp_exp/mvtec+visa",
     )
 parser.add_argument(
         "--gpu_id",
-        type=int, default=4,
+        type=int, default=7,
     )
 opt=parser.parse_args()
 root_dir=opt.data_path
 cnt=0
 flag=False
 dirs1= [
-        "bottle", 
-        "cable", 
-        "capsule", 
-        "capsules", 
-        "cashew", 
-        "chewinggum", 
-        "fryum", 
-        "hazelnut", 
-        "macaroni", 
-        "metal_nut", 
-        "pcb1", 
-        "pcb2", 
-        "pcb3", 
-        "pcb4", 
-        "pill", 
-        "pipe_fryum", 
-        "screw", 
-        "screw_single", 
-        "toothbrush", 
-        "tubes", 
+    "bottle", 
+	"cable", 
+	"candle", 
+	"capsule", 
+	"capsules", 
+	"carpet", 
+	"cashew", 
+	"chewinggum", 
+	"fryum", 
+	"grid", 
+	"hazelnut", 
+	"leather", 
+	"macaroni1", 
+	"macaroni2", 
+	"metal_nut", 
+	"pcb1", 
+	"pcb2", 
+	"pcb3", 
+	"pcb4", 
+	"pill", 
+	"pipe_fryum", 
+	"screw", 
+	"tile", 
+	"toothbrush", 
+	"transistor", 
+	"wood", 
+	"zipper", 
         ]
 # dirs1=os.listdir(root_dir)
 save_file = "generate-image.sh"

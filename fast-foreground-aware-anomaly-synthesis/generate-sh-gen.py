@@ -1,8 +1,8 @@
 import os
 
-root_dir = "/data1/gpt/jtj/asynthesis_data"
+root_dir = "/data1/gpt/jtj/supp_exp/mvtec+visa"
 save_file = "generate.sh"
-cuda_id = "6"
+cuda_id = "7"
 
 if os.path.exists(save_file):
     os.remove(save_file)

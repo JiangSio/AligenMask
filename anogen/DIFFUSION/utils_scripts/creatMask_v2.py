@@ -42,7 +42,7 @@ def random_mask(template, info):
 
 
 if __name__ == '__main__':
-    data_path = "/data1/gpt/jtj/asynthesis_data"
+    data_path = "/data1/gpt/jtj/supp_exp/mvtec+visa"
 
 
     classes = os.listdir(data_path)
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     for c in classes:
         root_path = os.path.join(data_path, c, "train/good")
         number = len(os.listdir(root_path))
-        files = [os.path.join(root_path, f) for f in os.listdir(root_path) if f.endswith(".png")]
+        files = [os.path.join(root_path, f) for f in os.listdir(root_path) if f.endswith(".png") or f.endswith(".JPG")]
         #遍历每一张图像
         for i in range(min(len(files),1000)):
             path = files[i]

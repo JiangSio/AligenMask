@@ -336,6 +336,9 @@ class MvtecDataset_singel_anomaly (Personalized_mvtec_encoder):
             mask_filename = mask_files[idx]
 
             img_filename = mask_filename.replace("/ground_truth/", "/test/")
+            img_filename = img_filename.replace("_mask", "")
+            if not os.path.exists(img_filename):
+                img_filename = img_filename.replace(".png", ".JPG")
 
             if not os.path.exists(img_filename):
                 print("jjjjjjjjjjjjjjjjj")
@@ -468,6 +471,9 @@ class MvtecDataset_singel_anomaly_validation (Personalized_mvtec_encoder):
             mask_filename = mask_files[idx]
 
             img_filename = mask_filename.replace("/ground_truth/", "/train/")
+            img_filename = img_filename.replace("_mask", "")
+            if not os.path.exists(img_filename):
+                img_filename = img_filename.replace(".png", ".JPG")
 
            
             parts = img_filename.split(os.sep)

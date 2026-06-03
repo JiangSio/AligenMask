@@ -5,7 +5,7 @@ from ldm.data.personalized import per_img_token_list
 from transformers import CLIPTokenizer
 from functools import partial
 from ldm.models.vit import VisionTransformer as VIT
-from ldm.models.psp_encoder.encoders import psp_encoders
+#from ldm.models.psp_encoder.encoders import psp_encoders
 import os
 from torchvision.utils import save_image
 DEFAULT_PLACEHOLDER_TOKEN = ["*"]
