@@ -212,7 +212,7 @@ if __name__=="__main__":
 
 
     # 1. 开启一个SwanLab实验
-    swanlab.login(api_key="jiuBHmVPiNvWvogwefpIl")
+    swanlab.login(api_key="")
     
     swanlab_config={
         "name": args.name,
